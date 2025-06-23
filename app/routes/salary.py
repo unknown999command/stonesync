@@ -48,6 +48,9 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
     """
     Основная функция для расчета зарплаты по дате завершения заказа
     """
+    # Список сотрудников, которые не участвуют в расчёте зарплаты
+    excluded_employees = ['Скуридин', 'Устимов']
+    
     # Базовый запрос для заказов
     orders_query = Order.query
     orders = orders_query.all()
@@ -177,6 +180,13 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
                 employee_name = employee.name
                 if izgotovlenie_worker != employee_name and montaj_worker != employee_name:
                     continue
+        
+        # Исключаем Скуридина и Устимова из расчётов
+        if izgotovlenie_worker in excluded_employees:
+            izgotovlenie_worker = None
+        if montaj_worker in excluded_employees:
+            montaj_worker = None
+        
         if izgotovlenie_worker and izgotovlenie_price:
             if izgotovlenie_worker not in salary_results:
                 salary_results[izgotovlenie_worker] = {
