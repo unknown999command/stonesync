@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/salary.css') }}">
     <title>StoneSync | Заработок сотрудников</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
 </head>
@@ -21,40 +22,44 @@
     </header>
 
     <!-- Фильтры -->
-    <table class="filters-container">
-        <thead>
-            <tr>
-                <th>
-                    <div class="filter">
-                        <img src="{{ url_for('static', filename='image/person.svg') }}" alt="Иконка сотрудника">
-                        <select id="filter-employee" name="employee">
-                            <option value="" selected>Все сотрудники</option>
-                            <!-- Здесь будут сотрудники -->
-                        </select>
-                    </div>
-                </th>
-                <th>
-                    <div class="filter">
-                        <img src="{{ url_for('static', filename='image/calendar.svg') }}" alt="Иконка календаря">
-                        <input type="month" id="filter-period" name="period">
-                    </div>
-                </th>
-                <th>
-                    <div class="filter">
-                        <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
-                        <select id="filter-type" name="type">
-                            <option value="all" selected>Все работы</option>
-                            <option value="izgotovlenie">Изготовление</option>
-                            <option value="montaj">Монтаж</option>
-                        </select>
-                    </div>
-                </th>
-                <th>
-                    <button type="submit" class="create-button" style="margin: 0;">Показать</button>
-                </th>
-            </tr>
-        </thead>
-    </table>
+    <form method="GET" action="{{ url_for('main.salary') }}" class="filters-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <div class="filter">
+                            <img src="{{ url_for('static', filename='image/person.svg') }}" alt="Иконка сотрудника">
+                            <select id="filter-employee" name="employee">
+                                <option value="" {% if not selected_employee %}selected{% endif %}>Все сотрудники</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if selected_employee == employee.id|string %}selected{% endif %}>{{ employee.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="filter">
+                            <img src="{{ url_for('static', filename='image/calendar.svg') }}" alt="Иконка календаря">
+                            <input type="month" id="filter-period" name="period" value="{{ selected_period }}">
+                        </div>
+                    </th>
+                    <th>
+                        <div class="filter">
+                            <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                            <select id="filter-type" name="type">
+                                <option value="all" {% if selected_type == 'all' %}selected{% endif %}>Все работы</option>
+                                <option value="izgotovlenie" {% if selected_type == 'izgotovlenie' %}selected{% endif %}>Изготовление</option>
+                                <option value="montaj" {% if selected_type == 'montaj' %}selected{% endif %}>Монтаж</option>
+                            </select>
+                        </div>
+                    </th>
+                    <th>
+                        <button type="submit" class="create-button" style="margin: 0;">Показать</button>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </form>
 
     <!-- Таблица заработка -->
     <table class="table-orders">
@@ -71,34 +76,57 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td class="col-employee">Иванов Иван</td>
-                <td class="col-orders">5</td>
-                <td class="col-izgotovlenie">80 000</td>
-                <td class="col-montaj">40 000</td>
-                <td class="col-total">120 000</td>
-            </tr>
-            <tr>
-                <td class="col-employee">Петров Пётр</td>
-                <td class="col-orders">3</td>
-                <td class="col-izgotovlenie">45 000</td>
-                <td class="col-montaj">30 000</td>
-                <td class="col-total">75 000</td>
-            </tr>
-            <tr>
-                <td class="col-employee">Сидоров Сидор</td>
-                <td class="col-orders">2</td>
-                <td class="col-izgotovlenie">25 000</td>
-                <td class="col-montaj">15 000</td>
-                <td class="col-total">40 000</td>
-            </tr>
+            {% if salary_data.employees %}
+                {% for employee_name, data in salary_data.employees.items() %}
+                <tr>
+                    <td class="col-employee">{{ employee_name }}</td>
+                    <td class="col-orders">{{ data.orders_count }}</td>
+                    <td class="col-izgotovlenie">{{ "{:,}".format(data.izgotovlenie_total).replace(',', ' ') if data.izgotovlenie_total > 0 else '-' }}</td>
+                    <td class="col-montaj">{{ "{:,}".format(data.montaj_total).replace(',', ' ') if data.montaj_total > 0 else '-' }}</td>
+                    <td class="col-total">{{ "{:,}".format(data.total_salary).replace(',', ' ') }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">Данные не найдены</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 
     <!-- Итоговая строка -->
-    <div style="margin-top: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 0.5rem; text-align: right;">
-        <strong>Общий итог: 235 000 ₽</strong>
+    {% if salary_data.summary.total_salary > 0 %}
+    <div class="summary-box">
+        <strong>Общий итог: {{ "{:,}".format(salary_data.summary.total_salary).replace(',', ' ') }} ₽</strong>
+        <small>
+            Заказов: {{ salary_data.summary.orders_count }} | 
+            Изготовление: {{ "{:,}".format(salary_data.summary.izgotovlenie_total).replace(',', ' ') }} ₽ | 
+            Монтаж: {{ "{:,}".format(salary_data.summary.montaj_total).replace(',', ' ') }} ₽
+        </small>
     </div>
+    {% endif %}
 
+    <script>
+        // Автоматическая отправка формы при изменении фильтров
+        document.getElementById('filter-employee').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        document.getElementById('filter-period').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        document.getElementById('filter-type').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        // Установка текущего месяца по умолчанию, если не выбран период
+        if (!document.getElementById('filter-period').value) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('filter-period').value = `${year}-${month}`;
+        }
+    </script>
 </body>
 </html> 

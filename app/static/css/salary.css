@@ -1,0 +1,240 @@
+/* Стили для страницы зарплаты */
+.filters-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filters-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.filters-container th {
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter img {
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+}
+
+.filter select,
+.filter input {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+.filter select:focus,
+.filter input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Таблица зарплаты */
+.table-orders {
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+}
+
+.table-orders thead {
+    background: #f8f9fa;
+}
+
+.table-orders th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-orders td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.table-orders tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table-orders tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Колонки */
+.col-employee {
+    font-weight: 600;
+    color: #495057;
+}
+
+.col-orders {
+    text-align: center;
+    color: #6c757d;
+}
+
+.col-izgotovlenie {
+    text-align: right;
+    color: #28a745;
+    font-weight: 600;
+}
+
+.col-montaj {
+    text-align: right;
+    color: #007bff;
+    font-weight: 600;
+}
+
+.col-total {
+    text-align: right;
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+/* Итоговая строка */
+.summary-box {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    color: white;
+    text-align: right;
+}
+
+.summary-box strong {
+    font-size: 1.5em;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.summary-box small {
+    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .filters-container table {
+        display: block;
+    }
+    
+    .filters-container thead {
+        display: none;
+    }
+    
+    .filters-container tbody {
+        display: block;
+    }
+    
+    .filters-container tr {
+        display: block;
+        margin-bottom: 1rem;
+    }
+    
+    .filters-container td {
+        display: block;
+        padding: 0.5rem 0;
+    }
+    
+    .filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter select,
+    .filter input {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .table-orders {
+        font-size: 14px;
+    }
+    
+    .table-orders th,
+    .table-orders td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .col-employee {
+        min-width: 120px;
+    }
+    
+    .col-orders {
+        min-width: 80px;
+    }
+    
+    .col-izgotovlenie,
+    .col-montaj,
+    .col-total {
+        min-width: 100px;
+    }
+}
+
+/* Анимации */
+.table-orders tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.filter select,
+.filter input {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Стили для пустого состояния */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state::before {
+    content: "📊";
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+/* Стили для загрузки */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.loading::after {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 
