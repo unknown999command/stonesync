@@ -1,0 +1,289 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
+
+body {
+    font-family: "Jost";
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    margin-left: 3rem;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.create-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    width: 12rem;
+    height: 2.2rem;
+    background-color: #309A5A;
+    transition-duration: 50ms;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+    margin-left: 1rem;
+    text-decoration: none;
+}
+
+.create-button:hover {
+    background-color: #166b38;
+    transition-duration: 50ms;
+}
+
+.map-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    width: 12rem;
+    height: 2.2rem;
+    background-color: #2d68c8;
+    transition-duration: 50ms;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+    margin-left: 1rem;
+    text-decoration: none;
+}
+
+.map-button:hover {
+    background-color: #12418d;
+    transition-duration: 50ms;
+}
+
+.filters-container {
+    width: 100%;
+    padding: 1rem;
+    border-spacing: 1rem;
+}
+
+.filters-container thead th {
+    width: 25%;
+}
+
+.filter {
+    border-radius: 8px;
+    display: flex;
+    height: 3rem;
+    background-color: #E9E9E9;
+}
+
+.filter img {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    width: 1.8rem;
+}
+
+.filter input {
+    font-weight: 500;
+    font-size: 1.4rem;
+    font-family: 'Jost';
+    width: 85%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background-color: #E9E9E9;
+}
+
+.filter select {
+    font-weight: 500;
+    color: #757575;
+    font-size: 1.4rem;
+    font-family: 'Jost';
+    width: 85%;
+    text-align: center;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background-color: #E9E9E9;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+}
+
+.filter select:focus {
+    outline: none;
+}
+
+.filter select option {
+    text-align: center;
+}
+
+.filter input[type="date"] {
+    font-weight: 500;
+    color: #757575;
+    font-size: 1.4rem;
+    font-family: 'Jost';
+    width: 85%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background-color: #E9E9E9;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.filter input[type="date"]:focus {
+    outline: none;
+}
+
+.filter input[type="date"]::-webkit-inner-spin-button,
+.filter input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+.filter input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+.filter input[type="date"]::before {
+    content: attr(placeholder);
+    display: block;
+    width: 100%;
+    text-align: center;
+    color: #999;
+}
+
+.filter input[type="date"]:valid::before {
+    content: "";
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    margin-left: 3rem;
+    font-size: 2rem;
+    font-weight: 500;
+}
+
+.tab {
+    color: #757575;
+    text-decoration: none;
+}
+
+.tab-active {
+    color: black;
+    /* text-decoration: underline; */
+}
+
+.table-orders {
+    width: 100%;
+    padding: 1rem;
+}
+
+.order::after {
+    content: '';
+    display: block;
+    height: 4rem;
+    width: 100%;
+}
+
+.table-orders button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.table-orders hr {
+    border: 0;
+    height: 2px;
+    background-color: #757575;
+}
+
+.table-orders td {
+    font-size: 1.4rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+.col-date {
+    width: 15%;
+}
+
+.col-status {
+    width: 20%;
+}
+
+.col-price {
+    width: 15%;
+}
+
+.col-stone {
+    width: 0%;
+}
+
+.col-address {
+    width: 35%;
+}
+
+.col-manufacturer {
+    width: 15%;
+}
+
+.col-deadline {
+    width: 20%;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 1rem;
+    gap: 10px;
+}
+
+.pagination a {
+    text-decoration: none;
+    color: #007bff;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pagination a:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination span {
+    font-weight: bold;
+    padding: 8px 12px;
+    color: #333;
+}
+
+.pagination a:disabled,
+.pagination a[disabled] {
+    pointer-events: none;
+    background-color: #e9ecef;
+    color: #6c757d;
+    border-color: #ddd;
+}

@@ -1,0 +1,717 @@
+<style>
+    #edit{{ order.id }} {
+        display: none;
+        padding: 1.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        background-color: #fafafa;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    #edit{{ order.id }} input,
+    #edit{{ order.id }} textarea,
+    #edit{{ order.id }} select {
+        height: 2.75rem;
+        width: calc(100% - 2rem);
+        font-size: 1.2rem;
+        border: 1px solid #ccc;
+        border-radius: 0.4rem;
+        background-color: #ffffff;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    #edit{{ order.id }} input:focus,
+    #edit{{ order.id }} textarea:focus,
+    #edit{{ order.id }} select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        outline: none;
+    }
+
+    #edit{{ order.id }} textarea {
+        height: 10rem;
+        resize: vertical;
+    }
+
+    #edit{{ order.id }} select {
+        padding-right: 2rem;
+    }
+
+    #edit{{ order.id }} label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    #edit{{ order.id }} .form-group {
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="order-detail-info-container">
+    <div id="loading-overlay{{ order.id }}" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+    <style>
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none; /* Скрыто по умолчанию */
+            }
+      
+        .loading-spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            }
+      
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>      
+    <div class="order-detail-left-side">
+        <div class="info-title">
+            <div class="mobile-info-title">
+                Заказ от {% set months = ["", "января", "февраля", "марта", "апреля",
+                    "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"] %}{{
+                    order.date.strftime('%d') }} {{ months[order.date.month] }} {{ order.date.strftime('%Y') }} г.
+            </div>
+            <div class="info-title-right-side">
+                <div>
+                    <img src="{{ url_for('static', filename='image/Bin.svg') }}" alt="Иконка удаления" id="delete-button{{ order.id }}" style="cursor: pointer;">
+                    <img src="{{ url_for('static', filename='image/Edit.svg') }}" alt="Иконка редактирования" id="edit-button{{ order.id }}" style="cursor: pointer;">
+                    <button style="display: none; background-color: #32b632; font-size: 1.5rem; padding: 0.5rem 1rem; color: black; border-radius: 1rem; font-weight: 500" type="button" id="submit-button{{ order.id }}">Подтвердить</button>
+                    <button style="display: none; background-color: #d54141; font-size: 1.5rem; padding: 0.5rem 1rem; color: black; border-radius: 1rem; font-weight: 500" type="button" id="cancel-button{{ order.id }}">Отменить</button>
+                </div>
+                <div class="status" style="background-color: {{ order.status.color }};" id="show{{ order.id }}">
+                    {{ order.status.name }}
+                </div>
+                <div class="status" id="edit{{ order.id }}" style="padding: 0.3rem;">
+                    <select name="status{{ order.id }}" id="status{{ order.id }}" style="width: 10rem; padding: 0">
+                            <option value="{{ order.status.id }}" selected>{{ order.status.name }}</option>
+                        {% for status in statuses %}
+                            <option value="{{ status.id }}">{{ status.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <hr style="width: 95%;">
+        <div class="info-content-container">
+            <div class="info-content">
+                <div class="customer" id="show{{ order.id }}">
+                    <img style="width: 1.5rem;" src="{{ url_for('static', filename='image/person.svg') }}" alt="Иконка человека">
+                    <div id="customer-show{{ order.id }}">{{ order.customer }}</div>
+                </div>
+                <div class="customer" id="edit{{ order.id }}">
+                    <img style="width: 1.5rem;" src="{{ url_for('static', filename='image/person.svg') }}" alt="Иконка человека">
+                    <input type="text" name="customer{{ order.id }}" id="customer{{ order.id }}" value="{{ order.customer }}" placeholder="Введите имя" required>
+                </div>
+                <div class="phone" id="show{{ order.id }}">
+                    <img style="width: 1.5rem;" src="{{ url_for('static', filename='image/icophone.svg') }}" alt="Иконка телефона">
+                    <div id="show-phone{{ order.id }}">{{ order.phone|format_phone }}</div>
+                </div>
+                <div class="phone" id="edit{{ order.id }}">
+                    <img style="width: 1.5rem;" src="{{ url_for('static', filename='image/icophone.svg') }}" alt="Иконка телефона">
+                    <input type="tel" id="phone{{ order.id }}" name="phone{{ order.id }}" required pattern="[+]7[0-9]{10}" placeholder="Введите номер телефона" title="Номер должен начинаться с 7 и состоять из 11 цифр" value="{{ order.phone }}">
+                </div>
+                <div class="contact-buttons">
+                    <a id="show{{ order.id }}" class="callbutton{{ order.id }}" href="tel:{{ order.phone }}" target="_blank"><img src="{{ url_for('static', filename='image/phone.svg') }}" alt="Кнопка позвонить"></a>
+                    <a id="show{{ order.id }}" class="whatsappbutton{{ order.id }}" href="https://wa.me/{{ order.phone }}" target="_blank"><img src="{{ url_for('static', filename='image/whatsapp.svg') }}" alt="WhatsApp"></a>
+                    <a id="show{{ order.id }}" class="telegrambutton{{ order.id }}" href="https://t.me/{{ order.phone }}" target="_blank"><img src="{{ url_for('static', filename='image/telegram.svg') }}" alt="Telegram"></a>
+                </div>
+                <div class="address" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/address.svg') }}" alt="Иконка адреса">
+                    <div><a id="show-address{{ order.id }}" href="https://yandex.ru/maps/?text={{ order.address }}" target="_blank" style="color: red;">{{ order.address }}</a></div>
+                </div>
+                <div class="address" id="edit{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/address.svg') }}" alt="Иконка адреса">
+                    <div><textarea type="text" name="address{{ order.id }}" id="address{{ order.id }}" placeholder="Введите адрес" required>{{ order.address }}</textarea></div>
+                </div>
+                <div class="doplata" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                    <div id="show-doplata{{ order.id }}">
+                        {% if order.doplata is not none %}
+                            {{ '{:,.0f}'.format(order.doplata)|replace(',', ' ') }} <span>&#8381; (Доплата)</span>
+                        {% else %}
+                            Не указана
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="izgotovlenie" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                    <div id="show-izgotovlenie{{ order.id }}">
+                        {% if order.izgotovlenie is not none %}
+                            {{ '{:,.0f}'.format(order.izgotovlenie)|replace(',', ' ') }} <span>&#8381; (Изготовление)</span>
+                        {% else %}
+                            Не указана
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="montaj" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                    <div id="show-montaj{{ order.id }}">
+                        {% if order.montaj is not none %}
+                            {{ '{:,.0f}'.format(order.montaj)|replace(',', ' ') }} <span>&#8381; (Монтаж)</span>
+                        {% else %}
+                            Не указана
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="doplata" id="edit{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                    <div>
+                        Доплата
+                        <input type="number" id="doplata{{ order.id }}" name="doplata{{ order.id }}" min="0" step="0.01" placeholder="Введите доплату" value="{{ order.doplata }}">
+                        Изготовление
+                        <input type="number" id="izgotovlenie{{ order.id }}" name="izgotovlenie{{ order.id }}" min="0" step="0.01" placeholder="Введите цену за изготовление" value="{{ order.izgotovlenie }}">
+                        Монтаж
+                        <input type="number" id="montaj{{ order.id }}" name="montaj{{ order.id }}" min="0" step="0.01" placeholder="Введите цену за монтаж" value="{{ order.montaj }}">
+                    </div>
+                </div>
+                <div class="deadline" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/detailcalendar.svg') }}" alt="Иконка календаря">
+                    <div id="show-deadline{{order.id}}">
+                        {% if order.deadline %}
+                            {% if order.deadline.strftime('%H:%M:%S') == '00:00:00' %}
+                                {{ order.deadline.strftime('%A, %d.%m.%Y') }}
+                            {% else %}
+                                {{ order.deadline.strftime('%A, %d.%m.%Y / %H:%M') }}
+                            {% endif %}
+                        {% else %}
+                            Не назначено
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="deadline" id="edit{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/detailcalendar.svg') }}" alt="Иконка календаря">
+                    <div>
+                        <input type="datetime-local" id="deadline{{ order.id }}" name="deadline{{ order.id }}" value="{{ deadline }}">
+                        <button style="text-decoration: underline; font-size: 1rem" onclick="document.getElementById('deadline{{ order.id }}').value = ''">очистить дату</button>
+                    </div>
+                </div>
+                <div class="manufacturer" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/spanner.svg') }}" alt="Иконка исполнителя">
+                    <div id="show-manufacturer{{ order.id }}">{{ order.manufacturer.name if order.manufacturer and order.manufacturer.name else "Не назначен" }}</div>
+                </div>
+                <div class="manufacturer" id="edit{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/spanner.svg') }}" alt="Иконка исполнителя">
+                    <select name="manufacturer{{ order.id }}" id="manufacturer{{ order.id }}">
+                        <option value="{% if order.manufacturer_id != None %}{{ order.manufacturer.id }}{% else %}None{% endif %}" selected>{{ order.manufacturer.name }}</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="info-desc" id="show{{ order.id }}">
+                {% if order.desc is not none and order.desc != '' %}
+                    {{ order.desc }}
+                {% else %}
+                    Описание отсутствует
+                {% endif %}
+            </div>
+            <div class="info-desc" id="edit{{ order.id }}">
+                <textarea name="desc{{ order.id }}" id="desc{{ order.id }}" style="width: 40rem; font-size: 1.3rem;">{% if order.desc != None %}{{ order.desc }}{% endif %}</textarea>
+            </div>
+        </div>
+        <hr style="width: 95%;">
+        <div class="order-detail-bottom-side">
+            <div class="pictures-container" id="pictures-container{{ order.id }}">
+                {% if photos %}
+                    {% for photo in photos %}
+                        <a href="{{ url_for('static', filename='photo/' + photo.path) }}" data-fancybox="gallery{{ order.id }}">
+                            <img src="{{ url_for('static', filename='photo/' + photo.small_path) }}" alt="" style="max-width: 100%; height: auto; border-radius: 1rem;"/>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <div id="empty-photo{{ order.id }}" style="color: gray">Нет фото</div>
+                {% endif %}
+                <label for="addphoto{{ order.id }}" id="edit{{ order.id }}" style="cursor: pointer; display: none; flex-direction: column">
+                    Добавить фото
+                    <div id="progress-container{{ order.id }}" style="display: none;">
+                        <progress id="uploadProgress{{ order.id }}" value="0" max="100" style="width: 100%;"></progress>
+                        <span id="uploadStatus{{ order.id }}"></span>
+                    </div>
+                </label>
+                <input type="file" id="addphoto{{ order.id }}" name="addphoto{{ order.id }}" style="display: none;" accept="image/*" multiple>
+                <script>
+                    document.getElementById('addphoto{{ order.id }}').addEventListener('change', function(event) {
+                        const files = event.target.files;
+                        if (files.length > 0) {
+                            uploadFiles(files);
+                        }
+                    });
+                
+                    function uploadFiles(files) {
+                        const formData = new FormData();
+                        for (let i = 0; i < files.length; i++) {
+                            formData.append('photos', files[i]);
+                        }
+                        const orderId = parseInt('{{ order.id }}', 10);
+                        if (orderId) {
+                            formData.append('order_id', orderId);
+                        }
+                        const progressContainer = document.getElementById('progress-container{{ order.id }}');
+                        const progressBar = document.getElementById('uploadProgress{{ order.id }}');
+                        const uploadStatus = document.getElementById('uploadStatus{{ order.id }}');
+                        progressContainer.style.display = 'block';
+                        const xhr = new XMLHttpRequest();
+                        const uploadUrl = '/addphoto';
+                        xhr.open('POST', uploadUrl, true);
+                        xhr.upload.onprogress = function(event) {
+                            if (event.lengthComputable) {
+                                const percentComplete = Math.round((event.loaded / event.total) * 100);
+                                progressBar.value = percentComplete;
+                                uploadStatus.textContent = `Загрузка: ${percentComplete}%`;
+                            }
+                        };
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                const commentsContainer = document.getElementById('comments-container{{ order.id }}');
+                                const emptyMessage = document.getElementById('empty-message{{ order.id }}');
+                                if (emptyMessage) {
+                                    emptyMessage.remove();
+                                }
+                                let now = new Date();
+                                let offset = 3;
+                                let hours = String(now.getHours() + offset).padStart(2, '0');
+                                let minutes = String(now.getMinutes()).padStart(2, '0');
+                                let day = String(now.getDate()).padStart(2, '0');
+                                let month = String(now.getMonth() + 1).padStart(2, '0');
+                                if (hours >= 24) {
+                                    hours = String(hours - 24).padStart(2, '0');
+                                    day = String(now.getDate() + 1).padStart(2, '0');
+                                }
+                                let utcnow = `${hours}:${minutes} \\ ${day}.${month}`;
+                                const resp = JSON.parse(xhr.responseText);
+                                const newCommentHTML = `
+                                    <div">
+                                        <div style="color: #FF0000">
+                                            Система <span style="color: gray;">${utcnow}</span>
+                                        </div>
+                                        <div style="margin-left: 1rem;">Добавленно ${resp.count} фото</div>
+                                    </div>
+                                `;
+                                commentsContainer.insertAdjacentHTML('afterbegin', newCommentHTML);
+                                try {
+                                    document.getElementById('empty-photo{{ order.id }}').style.display = "None"
+                                } catch (error) {
+                                    console.error('An error occurred:', error);
+                                }
+                                uploadStatus.textContent = 'Загрузка завершена!';
+                                progressBar.value = 100;
+                                const response = JSON.parse(xhr.responseText);
+                                console.log('Ответ сервера:', response);
+                                const container = document.getElementById('pictures-container{{ order.id }}');
+                                if (container) {
+                                    const lastLink = container.querySelector('a:last-of-type');
+                                    response.files.forEach(file => {
+                                        const link = document.createElement('a');
+                                        link.href = `/static/photo/${file.full_size}`;
+                                        link.dataset.fancybox = `gallery${orderId}`;
+                                        const img = document.createElement('img');
+                                        img.src = `/static/photo/${file.thumbnail}`;
+                                        img.alt = '';
+                                        img.style.maxWidth = '100%';
+                                        img.style.height = 'auto';
+                                        img.style.borderRadius = '1rem';
+                                        link.appendChild(img);
+                                        if (lastLink) {
+                                            container.insertBefore(link, lastLink.nextSibling);
+                                        } else {
+                                            container.appendChild(link);
+                                        }
+                                    });
+                                } else {
+                                    console.log('Ошибка: контейнер не найден.');
+                                }
+                            } else {
+                                uploadStatus.textContent = 'Ошибка загрузки. Попробуйте снова.';
+                                console.log('Ошибка ответа сервера:', JSON.parse(xhr.responseText));
+                            }
+                        };
+                        xhr.onerror = function() {
+                            uploadStatus.textContent = 'Ошибка сети. Попробуйте снова.';
+                            console.log('Ошибка сети');
+                        };
+                        xhr.send(formData);
+                    }
+                </script>
+            </div>
+            <div class="comment-section">
+                <div class="comment-section-comments" id="comments-container{{ order.id }}">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div id="comment-{{ message.id }}">
+                                <div style="color: {{ message.user.color }};">
+                                    {{ message.user.name }} <span style="color: gray;">{{ message.datetime.strftime('%H:%M \ %d.%m') }}</span>
+                                </div>
+                                <div style="margin-left: 1rem;">{{ message.text }}</div>
+                                <div style="margin-left: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    {% for photo in message.comment_photos %}
+                                        <a href="{{ url_for('static', filename='photo/' + photo.path) }}" data-fancybox="comment{{ message.id }}">
+                                            <img src="{{ url_for('static', filename='photo/' + photo.small_path) }}" alt="" style="height: 3rem; border-radius: 0.5rem;"/>
+                                        </a>
+                                    {% endfor %}
+                                    {% for file in message.comment_files %}
+                                        <a href="{{ url_for('static', filename='files/' + file.path) }}" download>{{ file.path }}</a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div id="empty-message{{ order.id }}" style="color: gray; text-align: center;">Здесь пока пусто</div>
+                    {% endif %}
+                </div>
+                <form class="comment-section-input" id="comment-form{{ order.id }}">
+                    <input type="text" id="comment-input{{ order.id }}" name="comment-text" required>
+                    <label for="file{{ order.id }}" class="custom-button"><img style="width: 1.5rem;" src="{{ url_for('static', filename='image/link.svg') }}" alt="Добавить файл"></label>
+                    <input class="file-input" type="file" id="file{{ order.id }}" name="files" multiple>
+                    <label for="submit{{ order.id }}" class="custom-button"><img style="width: 2rem;" src="{{ url_for('static', filename='image/go.svg') }}" alt="Отправить"></label>
+                    <button id="submit{{ order.id }}" type="submit"></button>
+                    <div id="progress-container" style="display: none;">
+                        <progress id="progress-bar" value="0" max="100" style="width: 100%;"></progress>
+                        <span id="progress-text">0%</span>
+                    </div>
+                </form>
+                <script>
+                    document.getElementById('comment-form{{ order.id }}').addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        const form = document.getElementById('comment-form{{ order.id }}');
+                        const formData = new FormData(form);
+                        formData.append('order_id', '{{ order.id }}');
+                        document.getElementById('progress-container').style.display = 'block';
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/add_comment', true);
+                        xhr.upload.onprogress = function(event) {
+                            if (event.lengthComputable) {
+                                const percentComplete = Math.round((event.loaded / event.total) * 100);
+                                document.getElementById('progress-bar').value = percentComplete;
+                                document.getElementById('progress-text').textContent = percentComplete + '%';
+                            }
+                        };
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                const response = JSON.parse(xhr.responseText);
+                                const commentsContainer = document.getElementById('comments-container{{ order.id }}');
+                                const emptyMessage = document.getElementById('empty-message{{ order.id }}');
+                                if (emptyMessage) {
+                                    emptyMessage.remove();
+                                }
+                                const newCommentHTML = `
+                                    <div id="comment-${response.id}">
+                                        <div style="color: ${response.color};">
+                                            ${response.user} <span style="color: gray;">${response.datetime}</span>
+                                        </div>
+                                        <div style="margin-left: 1rem;">${response.text}</div>
+                                        <div style="margin-left: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                                            ${response.photos.map(photo => 
+                                                `<a href="{{ url_for('static', filename='photo/') }}${photo}" data-fancybox="comment${response.id}">
+                                                    <img src="{{ url_for('static', filename='photo/') }}${photo}" alt="" style="height: 3rem;"/>
+                                                </a>`
+                                            ).join('')}
+                                            ${response.files.map(file => 
+                                                `<a href="{{ url_for('static', filename='files/') }}${file}" download>${file}</a>`
+                                            ).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                                commentsContainer.insertAdjacentHTML('afterbegin', newCommentHTML);
+                                form.reset();
+                                document.getElementById('progress-container').style.display = 'none';
+                            } else {
+                                alert('Ошибка при отправке данных.');
+                            }
+                        };
+                        xhr.onerror = function() {
+                            alert('Ошибка сети.');
+                            document.getElementById('progress-container').style.display = 'none';
+                        };
+                        xhr.send(formData);
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+    <div class="order-detail-right-side" id="map{{ order.id }}"></div>
+    <script type="text/javascript">
+        ymaps.ready(init);
+        function init() { 
+            var myMap = new ymaps.Map("map{{ order.id }}", {
+                center: [55.76, 37.64],
+                zoom: 8,
+                controls: []
+            });
+            var myPlacemark;
+            function updatePlacemark(address, color, preset) {
+                var geocoder = ymaps.geocode(address);
+    
+                geocoder.then(function (res) {
+                    var firstGeoObject = res.geoObjects.get(0);
+                    if (firstGeoObject) {
+                        var coords = firstGeoObject.geometry.getCoordinates();
+                        if (myPlacemark) {
+                            myMap.geoObjects.remove(myPlacemark);
+                        }
+                        myPlacemark = new ymaps.Placemark(coords, {
+                        }, {
+                            preset: preset,
+                            iconColor: color
+                        });
+                        myMap.geoObjects.add(myPlacemark);
+                    } else {
+                        console.log("Адрес не найден.");
+                    }
+                }, function (err) {
+                    console.log("Ошибка геокодирования:", err);
+                });
+            }
+            var initialAddress = document.getElementById('show-address{{ order.id }}').textContent;
+            var initialColor = document.querySelector('#show{{ order.id }}.status') ? window.getComputedStyle(document.querySelector('#show{{ order.id }}.status')).backgroundColor : '';
+            let initialPreset = '{{ order.deadline }}' !== 'None' ? "islands#governmentCircleIcon" : "islands#circleIcon";
+            updatePlacemark(initialAddress, initialColor, initialPreset);
+            var previousText = document.getElementById('show-address{{ order.id }}').textContent.trim();
+            var previousColor = document.querySelector('#show{{ order.id }}.status') ? window.getComputedStyle(document.querySelector('#show{{ order.id }}.status')).backgroundColor : '';
+            var previousDeadline = document.getElementById('show-deadline{{ order.id }}').textContent.trim();
+            setInterval(function() {
+                var currentDeadline = document.getElementById('show-deadline{{ order.id }}').textContent.trim();
+                var currentText = document.getElementById('show-address{{ order.id }}').textContent.trim();
+                var currentColor = document.querySelector('#show{{ order.id }}.status') ? window.getComputedStyle(document.querySelector('#show{{ order.id }}.status')).backgroundColor : '';
+                if (currentText !== previousText || currentColor !== previousColor || previousDeadline !== currentDeadline) {
+                    previousDeadline = currentDeadline;
+                    initialPreset = currentDeadline !== 'Не назначено' ? "islands#governmentCircleIcon" : "islands#circleIcon";
+                    previousText = currentText;
+                    previousColor = currentColor;
+                    updatePlacemark(currentText, currentColor, initialPreset);
+                }
+            }, 500);
+        }
+
+        document.getElementById('edit-button{{ order.id }}').addEventListener('click', function() {
+            document.querySelectorAll('[id="show{{ order.id }}"]').forEach(element => {
+                element.style.display = 'none';
+            });
+            document.getElementById('edit-button{{ order.id }}').style.display = 'none';
+            document.querySelectorAll('[id="edit{{ order.id }}"]').forEach(element => {
+                element.style.display = 'flex';
+            });
+            document.getElementById('delete-button{{ order.id }}').style.display = 'none';
+            document.getElementById('submit-button{{ order.id }}').style.display = 'initial';
+            document.getElementById('cancel-button{{ order.id }}').style.display = 'initial';
+        });
+        
+        document.getElementById('delete-button{{ order.id }}').addEventListener('click', function() {
+            const orderId = '{{ order.id }}';
+            const confirmed = confirm('Вы уверены, что хотите удалить этот заказ?');
+            if (!confirmed) {
+                return;
+            }
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/deleteorder', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    document.getElementById('tr{{ order.id }}').style.display = 'none';
+                    document.getElementById('tr-order-{{ order.id }}').style.display = 'none';
+                } else {
+                    console.error('Ошибка:', xhr.statusText);
+                }
+            };
+            const data = JSON.stringify({ order_id: orderId });
+            xhr.send(data);
+        });
+        
+        document.getElementById('cancel-button{{ order.id }}').addEventListener('click', function() {
+            document.querySelectorAll('[id="show{{ order.id }}"]').forEach(element => {
+                element.style.display = 'flex';
+            });
+            document.getElementById('edit-button{{ order.id }}').style.display = 'initial';
+            document.querySelectorAll('[id="edit{{ order.id }}"]').forEach(element => {
+                element.style.display = 'none';
+            });
+            document.getElementById('delete-button{{ order.id }}').style.display = 'initial';
+            document.getElementById('submit-button{{ order.id }}').style.display = 'none';
+            document.getElementById('cancel-button{{ order.id }}').style.display = 'none';
+        });
+        document.getElementById('submit-button{{ order.id }}').addEventListener('click', function() {
+            let inputs = [
+                document.getElementById('customer{{ order.id }}'),
+                document.getElementById('phone{{ order.id }}'),
+                document.getElementById('address{{ order.id }}'),
+                document.getElementById('doplata{{ order.id }}'),
+                document.getElementById('izgotovlenie{{ order.id }}'),
+                document.getElementById('montaj{{ order.id }}'),
+                document.getElementById('deadline{{ order.id }}'),
+                document.getElementById('manufacturer{{ order.id }}'),
+                document.getElementById('desc{{ order.id }}'),
+                document.getElementById('status{{ order.id }}')
+            ];
+            let allValid = true;
+            inputs.forEach(input => {
+                if (!input.checkValidity()) {
+                    allValid = false;
+                    input.reportValidity();
+                }
+            });
+            if (!allValid) {
+                console.log('Некоторые поля не прошли валидацию.');
+                return;
+            }
+            document.getElementById('loading-overlay{{ order.id }}').style.display = 'flex';
+            let getValueOrDefault = (id, defaultValue = '') => {
+                let value = document.getElementById(id).value;
+                return value === null || value === undefined ? defaultValue : value;
+            };
+
+            let dataArray = {
+                id: '{{ order.id }}',
+                customer: getValueOrDefault('customer{{ order.id }}'),
+                phone: getValueOrDefault('phone{{ order.id }}'),
+                address: getValueOrDefault('address{{ order.id }}'),
+                doplata: parseFloat(getValueOrDefault('doplata{{ order.id }}')) || 0,
+                izgotovlenie: parseFloat(getValueOrDefault('izgotovlenie{{ order.id }}')) || 0,
+                montaj: parseFloat(getValueOrDefault('montaj{{ order.id }}')) || 0,
+                deadline: getValueOrDefault('deadline{{ order.id }}'),
+                manufacturer: getValueOrDefault('manufacturer{{ order.id }}'),
+                desc: getValueOrDefault('desc{{ order.id }}') || '',
+                status: getValueOrDefault('status{{ order.id }}')
+            };
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '{{ url_for("main.edit") }}', true);
+            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            xhr.onload = function() {
+                document.getElementById('loading-overlay{{ order.id }}').style.display = 'none';
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText)
+                    document.querySelectorAll('[id="show{{ order.id }}"]').forEach(element => {
+                        element.style.display = 'flex';
+                    });
+                    document.getElementById('edit-button{{ order.id }}').style.display = 'initial';
+                    document.querySelectorAll('[id="edit{{ order.id }}"]').forEach(element => {
+                        element.style.display = 'none';
+                    });
+                    document.getElementById('delete-button{{ order.id }}').style.display = 'initial';
+                    document.getElementById('submit-button{{ order.id }}').style.display = 'none';
+                    document.getElementById('cancel-button{{ order.id }}').style.display = 'none';
+                    document.getElementById('customer-show{{ order.id }}').textContent = response.edit.customer;
+                    document.getElementById('show-phone{{ order.id }}').textContent = response.edit.format_phone;
+                    document.querySelector('#show{{ order.id }}.callbutton{{ order.id }}').href = 'tel:' + response.edit.phone;
+                    document.querySelector('#show{{ order.id }}.whatsappbutton{{ order.id }}').href = 'https://wa.me/' + response.edit.phone;
+                    document.querySelector('#show{{ order.id }}.telegrambutton{{ order.id }}').href = 'https://t.me/' + response.edit.phone;
+                    document.getElementById('show-address{{ order.id }}').textContent = response.edit.address;
+                    document.getElementById('show-address{{ order.id }}').href = 'https://yandex.ru/maps/?text=' + response.edit.address;
+                    document.getElementById('col-address{{ order.id }}').textContent = response.edit.address;
+                    document.getElementById('show-doplata{{ order.id }}').innerHTML = formatCurrency(response.edit.doplata) + " (Доплата)";
+                    document.getElementById('show-izgotovlenie{{ order.id }}').innerHTML = formatCurrency(response.edit.izgotovlenie) + " (Изготовление)";
+                    document.getElementById('show-montaj{{ order.id }}').innerHTML = formatCurrency(response.edit.montaj) + " (Монтаж)";
+                    document.getElementById('tr{{ order.id }}').setAttribute('data-customer', response.edit.customer);
+                    document.getElementById('tr{{ order.id }}').setAttribute('data-address', response.edit.address);
+                    document.getElementById('tr{{ order.id }}').setAttribute('data-status', response.edit.status_id);
+                    document.getElementById('tr{{ order.id }}').setAttribute('data-deadline', response.edit.deadline);
+                    document.getElementById('tr{{ order.id }}').setAttribute('data-price', response.edit.price);
+                    document.getElementById('tr{{ order.id }}').setAttribute('data-manufacturer', response.edit.manufacturer_id);
+                    function formatCurrency(value) {
+                        if (value === null || value === undefined) return 'Не указана';
+                        return value.toLocaleString('ru-RU') + ' <span>&#8381;</span>';
+                    }
+                    function generatePriceHtml(price, prepayment) {
+                        let htmlString = '';
+                        if (price !== null && price !== undefined && price !== 0) {
+                            htmlString += formatCurrency(price);
+                            if (prepayment !== null && prepayment !== undefined) {
+                                htmlString += ` (Оплачено: ${formatCurrency(prepayment)})`;
+                                let remainingAmount = price - prepayment;
+                                if (remainingAmount > 0) {
+                                    htmlString += `
+                                        <div class="prepayment">
+                                            Остаток: ${formatCurrency(remainingAmount)}
+                                        </div>
+                                    `;
+                                }
+                            }
+                        } else {
+                            htmlString = 'Не указана';
+                        }
+                        return htmlString;
+                    }
+                    function formatDateForDisplay(dateString, type) {
+                        if (!dateString) return 'Не назначено';
+                        let date = new Date(dateString);
+                        let day = String(date.getDate()).padStart(2, '0');
+                        let month = String(date.getMonth() + 1).padStart(2, '0');
+                        let year = date.getFullYear();
+                        let hours = String(date.getHours()).padStart(2, '0');
+                        let minutes = String(date.getMinutes()).padStart(2, '0');
+                        let daysOfWeek = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+                        let daysOfWeekShort = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                        let dows = String(daysOfWeekShort[date.getDay()])
+                        let dow = String(daysOfWeek[date.getDay()])
+                        if (type == 2) return `${dows}, ${day}.${month}.${year} ${hours}:${minutes}`;
+                        if (type == 1) return `${dow}, ${day}.${month}.${year} / ${hours}:${minutes}`;
+                    }
+                    document.getElementById('show-deadline{{ order.id }}').textContent = formatDateForDisplay(response.edit.deadline, 1);
+                    document.getElementById('col-deadline{{ order.id }}').textContent = formatDateForDisplay(response.edit.deadline, 2);
+                    document.getElementById('show-manufacturer{{ order.id }}').textContent = response.edit.manufacturer;
+                    document.getElementById('col-manufacturer{{ order.id }}').textContent = response.edit.manufacturer;
+                    document.getElementById('col-status{{ order.id }}').textContent = response.edit.status;
+                    document.getElementById('col-status{{ order.id }}').style = 'border-radius: 10px; color: rgba(0, 0, 0, 0.7); background-color: ' + response.edit.status_color;
+                    <!-- document.getElementById('col-stone{{ order.id }}').textContent = response.edit.stone -->
+                    document.querySelector('#show{{ order.id }}.status').textContent = response.edit.status;
+                    document.querySelector('#show{{ order.id }}.status').style = 'background-color: ' + response.edit.status_color;
+                    document.querySelector('#show{{ order.id }}.info-desc').textContent = response.edit?.desc !== null ? response.edit.desc : "Описание отсутствует";
+                    for (const change of response.changes) {
+                        let now = new Date();
+                        let moscowTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+                        let hours = String(moscowTime.getUTCHours()).padStart(2, '0');
+                        let minutes = String(moscowTime.getUTCMinutes()).padStart(2, '0');
+                        let day = String(moscowTime.getUTCDate()).padStart(2, '0');
+                        let month = String(moscowTime.getUTCMonth() + 1).padStart(2, '0');
+                        let utcnow = `${hours}:${minutes} \\ ${day}.${month}`;
+                        const commentsContainer = document.getElementById('comments-container{{ order.id }}');
+                        const newCommentHTML = `
+                            <div>
+                                <div style="color: #FF0000">
+                                    Система <span style="color: gray;">${utcnow}</span>
+                                </div>
+                                <div style="margin-left: 1rem;">${change}</div>
+                            </div>
+                        `;
+                        commentsContainer.insertAdjacentHTML('afterbegin', newCommentHTML);
+                        if (document.getElementById('empty-message{{ order.id }}'))
+                            document.getElementById('empty-message{{ order.id }}').textContent = "";
+                    }
+                    console.log('Успешно отправлено:', response);
+                } else {
+                    console.error('Ошибка отправки:', xhr.status, xhr.responseText);
+                }
+            };
+            xhr.onerror = function() {
+                document.getElementById('loading-overlay{{ order.id }}').style.display = 'none';
+                console.error('Ошибка соединения');
+            };
+            xhr.send(JSON.stringify({ data: dataArray }));
+        });
+    </script> 
+</div>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoneSync | Карта</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=3f51a6cb-1c20-4596-8977-dad231c5dcf9&lang=ru_RU" type="text/javascript"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+</head>
+<script>
+    if (window.innerWidth < 768) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.6');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+</script>
+
+<body>
+    <form id="filter-form">
+        <label for="status">Статус заказа:</label>
+        <select id="status" name="status">
+            <option value="">Все</option>
+            <option value="1">Замер</option>
+            <option value="4">Монтаж</option>
+        </select>
+        <label for="date">Дата:</label>
+        <input type="date" id="date" name="date">
+        <label for="hide-assigned">
+            <input type="checkbox" id="hide-assigned" name="hide_assigned">
+            Не показывать назначенные
+        </label>
+        <button type="submit">Применить</button>
+        <button type="reset">Сбросить</button>
+        <button type="button" onclick="window.location.href='/'">Вернуться к списку</button>
+    </form>
+    
+    <div id="map"></div>    
+    <script type="text/javascript">
+        ymaps.ready(init);
+        var myMap;
+        var myPlacemarkCollection;
+        function init() {
+            myMap = new ymaps.Map("map", {center: [55.76, 37.64], zoom: 8, controls: []});
+            myPlacemarkCollection = new ymaps.GeoObjectCollection();
+            myMap.geoObjects.add(myPlacemarkCollection);
+            loadMarkers();
+        }
+        function formatPrice(price) {
+            if (price === null) return 'Не указана';
+            return new Intl.NumberFormat('ru-RU').format(price) + '₽';
+        }
+        function formatPhone(phone) {
+            if (!phone) return 'Не указан';
+            phone = phone.replace(/\D/g, '');
+            if (phone.length === 11 && phone.startsWith('8')) {
+                phone = '7' + phone.slice(1);
+            }
+            return phone.replace(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/, '+$1 $2 $3-$4-$5');
+        }
+        function formatDate(dateString) {
+            if (!dateString) return 'Не указана';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU', {year: 'numeric', month: 'long', day: 'numeric'}) + ' ' +
+                   date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit', hour12: false});
+        }
+        function formatCaption(order) {
+            if (order.deadline) {
+                return formatDate(order.deadline);
+            }
+            return order.address;
+        }
+        function loadMarkers() {
+            var formData = new FormData(document.getElementById('filter-form'));
+            fetch('/map', {method: 'POST', body: formData})
+            .then(response => response.json())
+            .then(data => {
+                myPlacemarkCollection.removeAll();
+                data.orders.forEach(order => {
+                    ymaps.geocode(order.address).then(function (res) {
+                        var firstGeoObject = res.geoObjects.get(0);
+                        var coords = firstGeoObject.geometry.getCoordinates();
+                        var balloonContent = `
+                            <strong>Адрес:</strong> ${order.address}<br>
+                            <strong>Телефон:</strong> <a href="tel:${order.phone}">${formatPhone(order.phone)}</a><br>
+                            <strong>Срок выполнения:</strong> ${formatDate(order.deadline)}<br>
+                            <strong>Описание:</strong> ${order.desc || 'Не указано'}<br>
+                            <strong>Заказчик:</strong> ${order.customer}
+                        `;
+                        var preset = order.deadline ? 'islands#governmentCircleIcon' : 'islands#circleIcon';
+                        var myPlacemark = new ymaps.Placemark(coords, {hintContent: order.address, balloonContent: balloonContent}, {preset: preset, iconColor: order.status.color});
+                        if (!document.getElementById('hide-assigned').checked || !order.deadline) {
+                            myPlacemarkCollection.add(myPlacemark);
+                        }
+                    });
+                });
+            });
+        }
+        document.getElementById('filter-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            loadMarkers();
+        });
+    </script>
+</body>
+
+</html>

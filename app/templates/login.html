@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <title>StoneSync | Вход</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
+</head>
+<script>
+    if (window.innerWidth < 768) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.5');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+</script>
+<body>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}   
+        <div class="logo">
+            <img src="{{ url_for('static', filename='image/logo.svg') }}" alt="">
+        </div>
+        <form action="/login" method="post" class="input">
+            <img src="{{ url_for('static', filename='image/lock.svg') }}" alt="">
+            <input type="password" name="password" maxlength="20" required>
+            <button type="submit">
+                <img src="{{ url_for('static', filename='image/arrow.svg') }}" alt="">
+            </button>
+        </form>
+    </div>
+</body>
+</html> 

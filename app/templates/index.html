@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <title>StoneSync | Список заказов</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=3f51a6cb-1c20-4596-8977-dad231c5dcf9&lang=ru_RU" type="text/javascript"></script>
+</head>
+<script>
+    if (window.innerWidth < 768) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.4');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+</script>
+<body>
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+    <style>
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        .loading-spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <header>
+        <h1 class="title">Список заказов</h1>
+        <a href="{{ url_for('main.create') }}" class="create-button">Новый заказ</a>
+        <a href="{{ url_for('main.map') }}" class="map-button">Карта</a>
+    </header>
+
+    <!-- Фильтры -->
+    <table class="filters-container">
+        <thead>
+            <tr>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/search.svg') }}" alt="Иконка поиска">
+                        <input type="text" id="filter-customer" placeholder="Имя заказчика">
+                    </div>
+                </th>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/search.svg') }}" alt="Иконка поиска">
+                        <input type="text" id="filter-address" placeholder="Адрес">
+                    </div>
+                </th>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/collapse.svg') }}" alt="Иконка списка">
+                        <select id="filter-status">
+                            <option value="" selected>Нет статуса</option>
+                            {% for status in statuses %}
+                                <option value={{ status.id }}>{{ status.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </th>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/calendar.svg') }}" alt="Иконка календаря">
+                        <input type="date" id="filter-date">
+                    </div>
+                </th>
+            </tr>
+        </thead>
+    </table>
+
+    <!-- Вкладки -->
+    <div class="tabs">
+        <a href="{{ url_for('main.index') }}" class="tab {% if tab == 1 %}tab-active{% endif %}">Текущие</a>
+        <a href="{{ url_for('main.index', tab=3) }}" class="tab {% if tab == 3 %}tab-active{% endif %}">Ожидание<span style="font-size: 1.7rem">({{ wait_count }})</span></a>
+        <a href="{{ url_for('main.index', tab=6) }}" class="tab {% if tab == 6 %}tab-active{% endif %}">Без замера<span style="font-size: 1.7rem">({{ without_zamer }})</span></a>
+        <a href="{{ url_for('main.index', tab=7) }}" class="tab {% if tab == 7 %}tab-active{% endif %}">Без оплаты<span style="font-size: 1.7rem">({{ without_pay }})</span></a>
+        <a href="{{ url_for('main.index', tab=5) }}" class="tab {% if tab == 5 %}tab-active{% endif %}">Завершенные</a>
+    </div>
+
+    <!-- Таблица заказов -->
+    <table class="table-orders">
+        <thead>
+            <tr>
+                <th class="col-date"><button id="sort-date">Дата создания</button></th>
+                <th class="col-status"><button id="sort-status">Статус</button></th>
+                <th class="col-address"><div>Адрес</div></th>
+                <th class="col-manufacturer"><button id="sort-manufacturer">Изготовитель</button></th>
+                <th class="col-deadline"><button id="sort-deadline">Дата выполнения</button></th>
+            </tr>
+            <tr>
+                <th colspan="6"><hr></th>
+            </tr>
+        </thead>
+        <tbody id="orders-container">
+            {% for order in orders %}
+            <tr class="order" id="tr{{ order.id }}" style="cursor: pointer;" data-order-id="{{ order.id }}" data-customer="{{ order.customer }}" data-address="{{ order.address }}" data-status="{{ order.status.id }}" data-deadline="{{ order.deadline }}" data-price="{{ order.price }}" data-manufacturer="{{ order.manufacturer }}" data-date="{{ order.date }}">
+                <td class="col-date">
+                    {% set ns = namespace(is_view=0) %}
+                    {% for view in views if ns.is_view == 0 %}
+                        {% if view.order_id == order.id %}
+                            {% set ns.is_view = view.is_view %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if ns.is_view == 0 %}
+                        <img id="new{{ order.id }}" style="width: 1rem; margin-right: 1rem" src="{{ url_for('static', filename='image/new.svg') }}" alt="Иконка нового контента">
+                    {% endif %}
+                    {{ order.date.strftime('%d.%m.%Y') }}
+                </td>
+                <td class="col-status"><div id="col-status{{ order.id }}" style="background-color: {{ order.status.color }}; border-radius: 10px; color: rgba(0, 0, 0, 0.7);">{{ order.status.name }}</div></td>
+                <td class="col-address" id="col-address{{ order.id }}">{{ order.address }}</td>
+                <td class="col-manufacturer" id="col-manufacturer{{ order.id }}">{% if order.manufacturer == None %}Не назначен{% else %}{{ order.manufacturer.name }}{% endif %}</td>
+                <td class="col-deadline" id="col-deadline{{ order.id }}">
+                    {% if order.deadline %}
+                        {{ order.deadline.strftime('%a, %d.%m.%Y') if order.deadline.strftime('%H:%M:%S') == '00:00:00' else order.deadline.strftime('%a, %d.%m.%Y %H:%M') }}
+                    {% else %}
+                        Не назначена
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Пагинация только для tab=5 -->
+    {% if tab == 5 %}
+    <div class="pagination">
+        {% if orders_pagination.has_prev %}
+            <a href="?tab=5&page={{ orders_pagination.prev_num }}">Предыдущая</a>
+        {% else %}
+            <a href="#" class="disabled">Предыдущая</a>
+        {% endif %}
+        
+        <span>Страница {{ orders_pagination.page }} из {{ orders_pagination.pages }}</span>
+        
+        {% if orders_pagination.has_next %}
+            <a href="?tab=5&page={{ orders_pagination.next_num }}">Следующая</a>
+        {% else %}
+            <a href="#" class="disabled">Следующая</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    <br>
+
+</body>
+
+<script src="{{ url_for('static', filename='script/details.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/orderdetail.css') }}">
+<script src="{{ url_for('static', filename='script/sort.js') }}"></script>
+<script src="{{ url_for('static', filename='script/filter.js') }}"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+</html>

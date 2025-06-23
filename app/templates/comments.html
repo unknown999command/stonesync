@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/comments.css') }}">
+    <title>StoneSync | Комментарии</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
+</head>
+<body>
+    <div class="comment-section-comments">
+        {% if messages %}
+            {% for message in messages %}
+                <div>
+                    <div style="color: {{ message.user.color }};">
+                        {{ message.user.name }} <span style="color: gray;">{{ message.datetime.strftime('%H:%M \ %d.%m') }}</span>
+                    </div>
+                    <div style="margin-left: 1rem;">{{ message.text }}</div>
+                    <div style="margin-left: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        {% for photo in message.comment_photos %}
+                            <a href="{{ url_for('static', filename='photo/' + photo.path) }}" data-fancybox="comment{{ message.id }}">
+                                <img src="{{ url_for('static', filename='photo/' + photo.small_path) }}" alt="" style="height: 3rem; border-radius: 0.5rem;"/>
+                            </a>
+                        {% endfor %}
+                        {% for file in message.comment_files %}
+                            <a href="{{ url_for('static', filename='files/' + file.path) }}" download>{{ file.path }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="color: gray; text-align: center;">Здесь пока пусто</div>
+        {% endif %}
+    </div>
+</body>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+</html>

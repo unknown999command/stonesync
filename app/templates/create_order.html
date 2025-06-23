@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание заказа</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/create.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css" />
+</head>
+<script>
+    if (window.innerWidth < 768) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.5');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+</script>
+
+<body>
+    <div class="order-create-container">
+        <header class="order-create-header">
+            <h1>Создание нового заказа</h1>
+        </header>
+        <div class="order-create-form">
+            <form action="{{ url_for('main.create') }}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="status" class="required">Статус:</label>
+                    <select id="status" name="status" required>
+                        {% for status in statuses %}
+                        <option value="{{ status.id }}">{{ status.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="customer" class="required">Имя клиента:</label>
+                    <input type="text" id="customer" name="customer" required placeholder="Введите имя">
+                </div>
+                <div class="form-group">
+                    <label for="phone" class="required">Телефон:</label>
+                    <input type="tel" value="+79" id="phone" name="phone" required pattern="[+]7[0-9]{10}" placeholder="Введите номер телефона" title="Номер должен начинаться с +7 и состоять из 11 цифр">
+                </div>
+                <div class="form-group">
+                    <label for="address" class="required">Адрес:</label>
+                    <input type="text" id="address" name="address" required placeholder="Введите адрес">
+                    <ul id="suggestions"></ul>
+                    <style>
+                        /* Убираем границу, когда список пустой */
+                        #suggestions:empty {
+                            border: none;
+                        }
+                        
+                        /* Когда список содержит элементы, отображаем рамку */
+                        #suggestions:not(:empty) {
+                            border: 1px solid #ccc;
+                            max-width: 300px;
+                            padding: 0;
+                            margin: 0;
+                        }
+                        
+                        /* Стили для элементов списка */
+                        #suggestions li {
+                            padding: 5px 10px;
+                            cursor: pointer;
+                            border-bottom: 1px solid #eee;
+                        }
+                        
+                        /* Убираем нижнюю границу у последнего элемента */
+                        #suggestions li:last-child {
+                            border-bottom: none;
+                        }
+                        
+                        /* При наведении изменяем фон */
+                        #suggestions li:hover {
+                            background-color: #f0f0f0;
+                        }
+                    </style>                      
+                </div>
+                <div class="form-group">
+                    <label for="doplata">Доплата:</label>
+                    <input type="number" id="doplata" name="doplata" min="0" step="0.01" placeholder="Введите доплату">
+                </div>
+                <div class="form-group">
+                    <label for="izgotovlenie">Цена за изготовление:</label>
+                    <input type="number" id="izgotovlenie" name="izgotovlenie" min="0" step="0.01" placeholder="Введите цену за изготовление">
+                </div>
+                <div class="form-group">
+                    <label for="montaj">Цена за монтаж:</label>
+                    <input type="number" id="montaj" name="montaj" min="0" step="0.01" placeholder="Введите цену за монтаж">
+                </div>
+                <div class="form-group">
+                    <label for="desc">Описание:</label>
+                    <textarea id="desc" name="desc" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="deadline">Срок выполнения:</label>
+                    <div style="display: flex; align-items: center; gap: 2rem">
+                        <input type="datetime-local" id="deadline" name="deadline">
+                        <span style="cursor: pointer; text-decoration: underline" onclick="document.getElementById('deadline').value = ''">очистить дату</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="manufacturer">Исполнитель:</label>
+                    <select id="manufacturer" name="manufacturer">
+                        <option value="">Не назначен</option>
+                        {% for manufacturer in manufacturers %}
+                        <option value="{{ manufacturer.id }}">{{ manufacturer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="photos">Загрузить фото:</label>
+                    <input type="file" id="photos" name="photos" multiple accept="image/*" onchange="previewImages()">
+                </div>
+                <div class="form-group" id="preview-container">
+                </div>
+                <button type="submit" class="submit-button">Создать заказ</button>
+            </form>
+        </div>
+    </div>
+    <div id="progress-overlay" style="display: none;">
+        <div id="progress-container">
+            <div id="progress-bar">0%</div>
+        </div>
+    </div>
+    <style>
+        #progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        #progress-container {
+            width: 60%;
+            max-width: 500px;
+            height: 40px;
+            background: #f3f3f3;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #4caf50;
+            text-align: center;
+            line-height: 40px;
+            color: white;
+            border-radius: 20px;
+            transition: width 0.4s ease;
+        }
+    </style>
+    <script>
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = new FormData(this);
+            const xhr = new XMLHttpRequest();
+            const progressOverlay = document.getElementById('progress-overlay');
+            const progressBar = document.getElementById('progress-bar');
+            xhr.open('POST', this.action, true);
+            progressOverlay.style.display = 'flex';
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = percentComplete + '%';
+                }
+            };
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    progressBar.style.width = '100%';
+                    progressBar.textContent = '100%';
+                    setTimeout(function() {
+                        progressOverlay.style.display = 'none';
+                        window.location.href = '{{ url_for("main.index") }}';
+                    }, 500);
+                } else {
+                    alert('Ошибка при создании заказа.');
+                    progressOverlay.style.display = 'none';
+                }
+            };
+            xhr.onerror = function() {
+                alert('Ошибка при отправке запроса.');
+                progressOverlay.style.display = 'none';
+            };
+            xhr.send(form);
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=3f51a6cb-1c20-4596-8977-dad231c5dcf9&lang=ru_RU" type="text/javascript"></script>
+    <script>
+        document.getElementById("address").addEventListener("input", function() {
+            let query = this.value;
+            if (query.length < 3) return;
+    
+            let apiKey = "3f51a6cb-1c20-4596-8977-dad231c5dcf9";
+            let url = `https://geocode-maps.yandex.ru/1.x/?apikey=${apiKey}&geocode=${encodeURIComponent(query)}&format=json`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let suggestionsList = document.getElementById("suggestions");
+                    suggestionsList.innerHTML = "";
+    
+                    let results = data.response.GeoObjectCollection.featureMember;
+                    results.forEach(item => {
+                        let address = item.GeoObject.metaDataProperty.GeocoderMetaData.text;
+                        let li = document.createElement("li");
+                        li.textContent = address;
+                        li.onclick = () => {
+                            document.getElementById("address").value = address;
+                            suggestionsList.innerHTML = "";
+                        };
+                        suggestionsList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error("Ошибка запроса:", error));
+        });
+    </script>
+</body>
+
+</html>

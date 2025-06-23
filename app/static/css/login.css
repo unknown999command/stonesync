@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30vh;
+}
+
+.logo {
+    margin-bottom: 40px;
+}
+
+.input {
+    display: flex;
+    align-items: center;
+    width: 435px;
+    height: 50px;
+}
+
+input {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    font-size: 30px;
+    background-color: #E9E9E9;
+    border: 0;
+    outline: 0;
+    padding-block: 0;
+    padding-inline: 0;
+}
+
+.input > img {
+    height: 30px;
+    padding: 10px;
+    padding-right: 0px;
+    border-radius: 8px 0px 0px 8px;
+    background-color: #E9E9E9;
+}
+
+button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100px;
+    cursor: pointer;
+    background-color: #A39898;
+    border: 0;
+    border-radius: 8px;
+    padding: 0;
+    transition: background-color 0.3s;
+    margin-left: -8px;
+}
+
+button:hover {
+    background-color: #8C7B7B;
+}
+
+button > img {
+    max-height: 100%;
+    max-width: 100%;
+    height: auto;
+    width: auto;
+    transition: transform 0.3s;
+}
+
+button:hover > img {
+    transform: translateX(5px);
+}
+
+.error {
+    background-color: rgb(255, 97, 97);
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    padding: 0rem 1rem;
+    border-radius: 1rem;
+    font-family: "Jost";
+}
