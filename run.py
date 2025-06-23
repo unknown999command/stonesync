@@ -5,7 +5,7 @@ from app.bot import run_bot
 app = create_app()
 
 def run_flask():
-    app.run(debug=True, use_reloader=False, host='0.0.0.0', port=80)
+    app.run(debug=True, use_reloader=False, host='0.0.0.0', port=8000)
 
 if __name__ == '__main__':
     flask_thread = Thread(target=run_flask)
