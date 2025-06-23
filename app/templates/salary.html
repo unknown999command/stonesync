@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заработок сотрудников</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+    <header>
+        <h1 class="title">Заработок сотрудников</h1>
+        <a href="{{ url_for('main.index') }}" class="create-button">На главную</a>
+    </header>
+    <div class="filters-container" style="margin: 2rem 0;">
+        <form method="get">
+            <label for="employee">Сотрудник:</label>
+            <select id="employee" name="employee">
+                <option value="">Все</option>
+                <!-- Здесь будут сотрудники -->
+            </select>
+            <label for="period">Период:</label>
+            <input type="month" id="period" name="period">
+            <button type="submit" class="create-button">Показать</button>
+        </form>
+    </div>
+    <div class="salary-table-container">
+        <table class="table-orders">
+            <thead>
+                <tr>
+                    <th>Сотрудник</th>
+                    <th>Количество заказов</th>
+                    <th>Сумма (₽)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Здесь будут строки с результатами -->
+                <tr>
+                    <td>Иванов Иван</td>
+                    <td>5</td>
+                    <td>120 000</td>
+                </tr>
+                <tr>
+                    <td>Петров Пётр</td>
+                    <td>3</td>
+                    <td>75 000</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html> 
