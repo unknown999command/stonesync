@@ -52,7 +52,11 @@ def calculate_salary(employee_id='', period='', work_type='all'):
         'orders_count': 0,
         'izgotovlenie_total': 0,
         'montaj_total': 0,
-        'total_salary': 0
+        'total_salary': 0,
+        'completed_orders': 0,
+        'total_orders': len(orders),
+        'period_start': None,
+        'period_end': None
     }
     
     # Фильтрация по периоду теперь будет по дате завершения
@@ -67,6 +71,8 @@ def calculate_salary(employee_id='', period='', work_type='all'):
                 period_end = datetime(int(year) + 1, 1, 1)
             else:
                 period_end = datetime(int(year), int(month) + 1, 1)
+            total_summary['period_start'] = period_start
+            total_summary['period_end'] = period_end
         except:
             pass
     
@@ -92,6 +98,8 @@ def calculate_salary(employee_id='', period='', work_type='all'):
         # Добавляем заказ в обработку
         filtered_orders.append((order, comments, finish_date))
     
+    total_summary['completed_orders'] = len(filtered_orders)
+    
     for order, comments, finish_date in filtered_orders:
         izgotovlenie_worker = None
         montaj_worker = None
@@ -99,6 +107,18 @@ def calculate_salary(employee_id='', period='', work_type='all'):
         montaj_price = order.montaj
         last_workers = {}
         current_status = None
+        
+        # Детали заказа для отображения
+        order_details = {
+            'id': order.id,
+            'address': order.address,
+            'customer': order.customer,
+            'finish_date': finish_date,
+            'izgotovlenie_price': izgotovlenie_price,
+            'montaj_price': montaj_price,
+            'total_price': (izgotovlenie_price or 0) + (montaj_price or 0)
+        }
+        
         for comment in comments:
             text = comment.text
             status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', text)
@@ -147,11 +167,24 @@ def calculate_salary(employee_id='', period='', work_type='all'):
                     'orders_count': 0,
                     'izgotovlenie_total': 0,
                     'montaj_total': 0,
-                    'total_salary': 0
+                    'total_salary': 0,
+                    'orders': [],
+                    'avg_order_value': 0,
+                    'first_order_date': None,
+                    'last_order_date': None
                 }
             salary_results[izgotovlenie_worker]['izgotovlenie_total'] += izgotovlenie_price
             salary_results[izgotovlenie_worker]['total_salary'] += izgotovlenie_price
             salary_results[izgotovlenie_worker]['orders_count'] += 1
+            salary_results[izgotovlenie_worker]['orders'].append({
+                **order_details,
+                'work_type': 'Изготовление',
+                'price': izgotovlenie_price
+            })
+            if not salary_results[izgotovlenie_worker]['first_order_date'] or finish_date < salary_results[izgotovlenie_worker]['first_order_date']:
+                salary_results[izgotovlenie_worker]['first_order_date'] = finish_date
+            if not salary_results[izgotovlenie_worker]['last_order_date'] or finish_date > salary_results[izgotovlenie_worker]['last_order_date']:
+                salary_results[izgotovlenie_worker]['last_order_date'] = finish_date
             total_summary['izgotovlenie_total'] += izgotovlenie_price
             total_summary['total_salary'] += izgotovlenie_price
             total_summary['orders_count'] += 1
@@ -161,15 +194,39 @@ def calculate_salary(employee_id='', period='', work_type='all'):
                     'orders_count': 0,
                     'izgotovlenie_total': 0,
                     'montaj_total': 0,
-                    'total_salary': 0
+                    'total_salary': 0,
+                    'orders': [],
+                    'avg_order_value': 0,
+                    'first_order_date': None,
+                    'last_order_date': None
                 }
             salary_results[montaj_worker]['montaj_total'] += montaj_price
             salary_results[montaj_worker]['total_salary'] += montaj_price
             salary_results[montaj_worker]['orders_count'] += 1
+            salary_results[montaj_worker]['orders'].append({
+                **order_details,
+                'work_type': 'Монтаж',
+                'price': montaj_price
+            })
+            if not salary_results[montaj_worker]['first_order_date'] or finish_date < salary_results[montaj_worker]['first_order_date']:
+                salary_results[montaj_worker]['first_order_date'] = finish_date
+            if not salary_results[montaj_worker]['last_order_date'] or finish_date > salary_results[montaj_worker]['last_order_date']:
+                salary_results[montaj_worker]['last_order_date'] = finish_date
             total_summary['montaj_total'] += montaj_price
             total_summary['total_salary'] += montaj_price
             total_summary['orders_count'] += 1
+    
+    # Вычисляем средние значения и дополнительную статистику
+    for employee_data in salary_results.values():
+        if employee_data['orders_count'] > 0:
+            employee_data['avg_order_value'] = employee_data['total_salary'] / employee_data['orders_count']
+            # Сортируем заказы по дате завершения
+            employee_data['orders'].sort(key=lambda x: x['finish_date'], reverse=True)
+    
+    # Сортируем сотрудников по общему заработку
+    sorted_employees = dict(sorted(salary_results.items(), key=lambda x: x[1]['total_salary'], reverse=True))
+    
     return {
-        'employees': salary_results,
+        'employees': sorted_employees,
         'summary': total_summary
     } 

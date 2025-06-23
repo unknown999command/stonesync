@@ -45,6 +45,52 @@
     box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
 }
 
+/* Статистические карточки */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #495057;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
 /* Таблица зарплаты */
 .table-orders {
     width: 100%;
@@ -81,27 +127,139 @@
     border-bottom: none;
 }
 
+/* Строки сотрудников */
+.employee-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.employee-row:hover {
+    background-color: #e9ecef !important;
+}
+
+.employee-row.expanded {
+    background-color: #e3f2fd !important;
+}
+
+.employee-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.employee-stats {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Детали заказов */
+.order-details {
+    background-color: #f8f9fa;
+}
+
+.order-details-content {
+    padding: 1rem;
+}
+
+.order-details-content h4 {
+    margin: 0 0 1rem 0;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.order-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid #007bff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.order-id {
+    font-weight: 600;
+    color: #007bff;
+    background: #e3f2fd;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.order-type {
+    font-weight: 600;
+    color: #28a745;
+    background: #e8f5e8;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.order-price {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 1.1rem;
+}
+
+.order-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.order-customer {
+    font-weight: 600;
+    color: #495057;
+}
+
+.order-address {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
 /* Колонки */
 .col-employee {
     font-weight: 600;
     color: #495057;
+    min-width: 200px;
 }
 
 .col-orders {
     text-align: center;
     color: #6c757d;
+    min-width: 80px;
 }
 
 .col-izgotovlenie {
     text-align: right;
     color: #28a745;
     font-weight: 600;
+    min-width: 120px;
 }
 
 .col-montaj {
     text-align: right;
     color: #007bff;
     font-weight: 600;
+    min-width: 120px;
 }
 
 .col-total {
@@ -109,6 +267,21 @@
     color: #dc3545;
     font-weight: 700;
     font-size: 1.1em;
+    min-width: 120px;
+}
+
+.col-avg {
+    text-align: right;
+    color: #6f42c1;
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.col-period {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.9rem;
+    min-width: 120px;
 }
 
 /* Итоговая строка */
@@ -134,6 +307,23 @@
 
 /* Адаптивность */
 @media (max-width: 768px) {
+    .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
     .filters-container table {
         display: block;
     }
@@ -169,25 +359,33 @@
     
     .table-orders {
         font-size: 14px;
+        overflow-x: auto;
     }
     
     .table-orders th,
     .table-orders td {
         padding: 0.75rem 0.5rem;
+        white-space: nowrap;
     }
     
-    .col-employee {
-        min-width: 120px;
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
-    .col-orders {
-        min-width: 80px;
+    .order-header > * {
+        width: 100%;
+        text-align: left;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-overview {
+        grid-template-columns: 1fr;
     }
     
-    .col-izgotovlenie,
-    .col-montaj,
-    .col-total {
-        min-width: 100px;
+    .table-orders {
+        font-size: 12px;
     }
 }
 
@@ -199,6 +397,10 @@
 .filter select,
 .filter input {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Стили для пустого состояния */

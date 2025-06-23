@@ -21,6 +21,40 @@
         <a href="{{ url_for('main.index') }}" class="create-button">На главную</a>
     </header>
 
+    <!-- Общая статистика -->
+    {% if salary_data.summary.total_orders > 0 %}
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ salary_data.summary.total_orders }}</div>
+                <div class="stat-label">Всего заказов</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ salary_data.summary.completed_orders }}</div>
+                <div class="stat-label">Завершено</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ "{:,}".format(salary_data.summary.total_salary).replace(',', ' ') }} ₽</div>
+                <div class="stat-label">Общий заработок</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ salary_data.employees|length }}</div>
+                <div class="stat-label">Сотрудников</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Фильтры -->
     <form method="GET" action="{{ url_for('main.salary') }}" class="filters-container">
         <table>
@@ -66,29 +100,74 @@
         <thead>
             <tr>
                 <th class="col-employee">Сотрудник</th>
-                <th class="col-orders">Количество заказов</th>
+                <th class="col-orders">Заказов</th>
                 <th class="col-izgotovlenie">Изготовление (₽)</th>
                 <th class="col-montaj">Монтаж (₽)</th>
                 <th class="col-total">Итого (₽)</th>
+                <th class="col-avg">Средний заказ</th>
+                <th class="col-period">Период работы</th>
             </tr>
             <tr>
-                <th colspan="5"><hr></th>
+                <th colspan="7"><hr></th>
             </tr>
         </thead>
         <tbody>
             {% if salary_data.employees %}
                 {% for employee_name, data in salary_data.employees.items() %}
-                <tr>
-                    <td class="col-employee">{{ employee_name }}</td>
+                <tr class="employee-row" data-employee="{{ employee_name }}">
+                    <td class="col-employee">
+                        <div class="employee-info">
+                            <strong>{{ employee_name }}</strong>
+                            <small class="employee-stats">
+                                {{ data.orders_count }} заказов • 
+                                {{ "{:,}".format(data.avg_order_value|round(0)).replace(',', ' ') }} ₽ средний
+                            </small>
+                        </div>
+                    </td>
                     <td class="col-orders">{{ data.orders_count }}</td>
                     <td class="col-izgotovlenie">{{ "{:,}".format(data.izgotovlenie_total).replace(',', ' ') if data.izgotovlenie_total > 0 else '-' }}</td>
                     <td class="col-montaj">{{ "{:,}".format(data.montaj_total).replace(',', ' ') if data.montaj_total > 0 else '-' }}</td>
                     <td class="col-total">{{ "{:,}".format(data.total_salary).replace(',', ' ') }}</td>
+                    <td class="col-avg">{{ "{:,}".format(data.avg_order_value|round(0)).replace(',', ' ') }} ₽</td>
+                    <td class="col-period">
+                        {% if data.first_order_date and data.last_order_date %}
+                            {% if data.first_order_date.strftime('%d.%m') == data.last_order_date.strftime('%d.%m') %}
+                                {{ data.first_order_date.strftime('%d.%m.%Y') }}
+                            {% else %}
+                                {{ data.first_order_date.strftime('%d.%m') }} - {{ data.last_order_date.strftime('%d.%m.%Y') }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr class="order-details" id="details-{{ employee_name|replace(' ', '-') }}" style="display: none;">
+                    <td colspan="7">
+                        <div class="order-details-content">
+                            <h4>Детали заказов {{ employee_name }}:</h4>
+                            <div class="orders-list">
+                                {% for order in data.orders %}
+                                <div class="order-item">
+                                    <div class="order-header">
+                                        <span class="order-id">#{{ order.id }}</span>
+                                        <span class="order-type">{{ order.work_type }}</span>
+                                        <span class="order-price">{{ "{:,}".format(order.price).replace(',', ' ') }} ₽</span>
+                                        <span class="order-date">{{ order.finish_date.strftime('%d.%m.%Y') }}</span>
+                                    </div>
+                                    <div class="order-info">
+                                        <div class="order-customer">{{ order.customer }}</div>
+                                        <div class="order-address">{{ order.address }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="5" class="empty-state">Данные не найдены</td>
+                    <td colspan="7" class="empty-state">Данные не найдены</td>
                 </tr>
             {% endif %}
         </tbody>
@@ -102,6 +181,9 @@
             Заказов: {{ salary_data.summary.orders_count }} | 
             Изготовление: {{ "{:,}".format(salary_data.summary.izgotovlenie_total).replace(',', ' ') }} ₽ | 
             Монтаж: {{ "{:,}".format(salary_data.summary.montaj_total).replace(',', ' ') }} ₽
+            {% if selected_period %}
+            | Период: {{ selected_period }}
+            {% endif %}
         </small>
     </div>
     {% endif %}
@@ -127,6 +209,19 @@
             const month = String(now.getMonth() + 1).padStart(2, '0');
             document.getElementById('filter-period').value = `${year}-${month}`;
         }
+        
+        // Показать/скрыть детали заказов при клике на строку сотрудника
+        document.querySelectorAll('.employee-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const employeeName = this.getAttribute('data-employee');
+                const detailsRow = document.getElementById(`details-${employeeName.replace(/ /g, '-')}`);
+                if (detailsRow) {
+                    const isVisible = detailsRow.style.display !== 'none';
+                    detailsRow.style.display = isVisible ? 'none' : 'table-row';
+                    this.classList.toggle('expanded', !isVisible);
+                }
+            });
+        });
     </script>
 </body>
 </html> 
