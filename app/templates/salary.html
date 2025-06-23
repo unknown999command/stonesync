@@ -3,49 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заработок сотрудников</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <title>StoneSync | Заработок сотрудников</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
 </head>
+<script>
+    if (window.innerWidth < 768) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.4');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+</script>
 <body>
     <header>
         <h1 class="title">Заработок сотрудников</h1>
         <a href="{{ url_for('main.index') }}" class="create-button">На главную</a>
     </header>
-    <div class="filters-container" style="margin: 2rem 0;">
-        <form method="get">
-            <label for="employee">Сотрудник:</label>
-            <select id="employee" name="employee">
-                <option value="">Все</option>
-                <!-- Здесь будут сотрудники -->
-            </select>
-            <label for="period">Период:</label>
-            <input type="month" id="period" name="period">
-            <button type="submit" class="create-button">Показать</button>
-        </form>
+
+    <!-- Фильтры -->
+    <table class="filters-container">
+        <thead>
+            <tr>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/person.svg') }}" alt="Иконка сотрудника">
+                        <select id="filter-employee" name="employee">
+                            <option value="" selected>Все сотрудники</option>
+                            <!-- Здесь будут сотрудники -->
+                        </select>
+                    </div>
+                </th>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/calendar.svg') }}" alt="Иконка календаря">
+                        <input type="month" id="filter-period" name="period">
+                    </div>
+                </th>
+                <th>
+                    <div class="filter">
+                        <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                        <select id="filter-type" name="type">
+                            <option value="all" selected>Все работы</option>
+                            <option value="izgotovlenie">Изготовление</option>
+                            <option value="montaj">Монтаж</option>
+                        </select>
+                    </div>
+                </th>
+                <th>
+                    <button type="submit" class="create-button" style="margin: 0;">Показать</button>
+                </th>
+            </tr>
+        </thead>
+    </table>
+
+    <!-- Таблица заработка -->
+    <table class="table-orders">
+        <thead>
+            <tr>
+                <th class="col-employee">Сотрудник</th>
+                <th class="col-orders">Количество заказов</th>
+                <th class="col-izgotovlenie">Изготовление (₽)</th>
+                <th class="col-montaj">Монтаж (₽)</th>
+                <th class="col-total">Итого (₽)</th>
+            </tr>
+            <tr>
+                <th colspan="5"><hr></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="col-employee">Иванов Иван</td>
+                <td class="col-orders">5</td>
+                <td class="col-izgotovlenie">80 000</td>
+                <td class="col-montaj">40 000</td>
+                <td class="col-total">120 000</td>
+            </tr>
+            <tr>
+                <td class="col-employee">Петров Пётр</td>
+                <td class="col-orders">3</td>
+                <td class="col-izgotovlenie">45 000</td>
+                <td class="col-montaj">30 000</td>
+                <td class="col-total">75 000</td>
+            </tr>
+            <tr>
+                <td class="col-employee">Сидоров Сидор</td>
+                <td class="col-orders">2</td>
+                <td class="col-izgotovlenie">25 000</td>
+                <td class="col-montaj">15 000</td>
+                <td class="col-total">40 000</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Итоговая строка -->
+    <div style="margin-top: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 0.5rem; text-align: right;">
+        <strong>Общий итог: 235 000 ₽</strong>
     </div>
-    <div class="salary-table-container">
-        <table class="table-orders">
-            <thead>
-                <tr>
-                    <th>Сотрудник</th>
-                    <th>Количество заказов</th>
-                    <th>Сумма (₽)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Здесь будут строки с результатами -->
-                <tr>
-                    <td>Иванов Иван</td>
-                    <td>5</td>
-                    <td>120 000</td>
-                </tr>
-                <tr>
-                    <td>Петров Пётр</td>
-                    <td>3</td>
-                    <td>75 000</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+
 </body>
 </html> 
