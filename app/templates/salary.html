@@ -74,7 +74,12 @@
                     <th>
                         <div class="filter">
                             <img src="{{ url_for('static', filename='image/calendar.svg') }}" alt="Иконка календаря">
-                            <input type="month" id="filter-period" name="period" value="{{ selected_period }}">
+                            <select id="period-type" name="period_type" style="width: 80px; margin-right: 0.5rem;">
+                                <option value="month" {% if selected_period_type == 'month' %}selected{% endif %}>Месяц</option>
+                                <option value="year" {% if selected_period_type == 'year' %}selected{% endif %}>Год</option>
+                            </select>
+                            <input type="month" id="filter-period" name="period" value="{{ selected_period }}" style="width: calc(100% - 90px);">
+                            <input type="number" id="filter-year" name="year" value="{{ selected_year }}" min="2020" max="2030" style="width: calc(100% - 90px); display: none;" placeholder="Год">
                         </div>
                     </th>
                     <th>
@@ -181,14 +186,59 @@
             Заказов: {{ salary_data.summary.orders_count }} | 
             Изготовление: {{ "{:,}".format(salary_data.summary.izgotovlenie_total).replace(',', ' ') }} ₽ | 
             Монтаж: {{ "{:,}".format(salary_data.summary.montaj_total).replace(',', ' ') }} ₽
-            {% if selected_period %}
+            {% if selected_period_type == 'month' and selected_period %}
             | Период: {{ selected_period }}
+            {% elif selected_period_type == 'year' and selected_year %}
+            | Год: {{ selected_year }}
             {% endif %}
         </small>
     </div>
     {% endif %}
 
     <script>
+        // Функция переключения между месяцем и годом
+        function togglePeriodType() {
+            const periodType = document.getElementById('period-type').value;
+            const monthInput = document.getElementById('filter-period');
+            const yearInput = document.getElementById('filter-year');
+            
+            if (periodType === 'month') {
+                monthInput.style.display = 'inline-block';
+                yearInput.style.display = 'none';
+                monthInput.name = 'period';
+                yearInput.name = 'year_disabled';
+            } else {
+                monthInput.style.display = 'none';
+                yearInput.style.display = 'inline-block';
+                monthInput.name = 'period_disabled';
+                yearInput.name = 'year';
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePeriodType();
+            
+            // Установка текущего месяца/года по умолчанию, если не выбран период
+            const periodType = document.getElementById('period-type').value;
+            if (periodType === 'month' && !document.getElementById('filter-period').value) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                document.getElementById('filter-period').value = `${year}-${month}`;
+            } else if (periodType === 'year' && !document.getElementById('filter-year').value) {
+                const now = new Date();
+                document.getElementById('filter-year').value = now.getFullYear();
+            }
+        });
+        
+        // Обработчик изменения типа периода
+        document.getElementById('period-type').addEventListener('change', function() {
+            togglePeriodType();
+            // Автоматическая отправка формы при изменении типа периода
+            document.querySelector('form').submit();
+        });
+        
         // Автоматическая отправка формы при изменении фильтров
         document.getElementById('filter-employee').addEventListener('change', function() {
             document.querySelector('form').submit();
@@ -198,17 +248,13 @@
             document.querySelector('form').submit();
         });
         
-        document.getElementById('filter-type').addEventListener('change', function() {
+        document.getElementById('filter-year').addEventListener('change', function() {
             document.querySelector('form').submit();
         });
         
-        // Установка текущего месяца по умолчанию, если не выбран период
-        if (!document.getElementById('filter-period').value) {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('filter-period').value = `${year}-${month}`;
-        }
+        document.getElementById('filter-type').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
         
         // Показать/скрыть детали заказов при клике на строку сотрудника
         document.querySelectorAll('.employee-row').forEach(row => {

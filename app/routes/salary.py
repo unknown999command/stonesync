@@ -12,19 +12,23 @@ def salary():
     # Получаем параметры фильтрации
     employee_id = request.args.get('employee', '')
     period = request.args.get('period', '')
+    year = request.args.get('year', '')
+    period_type = request.args.get('period_type', 'month')
     work_type = request.args.get('type', 'all')
     
     # Получаем всех сотрудников для фильтра
     employees = User.query.filter(User.id != 0).all()
     
     # Получаем данные о зарплате
-    salary_data = calculate_salary(employee_id, period, work_type)
+    salary_data = calculate_salary(employee_id, period, year, period_type, work_type)
     
     return render_template('salary.html', 
                          employees=employees,
                          salary_data=salary_data,
                          selected_employee=employee_id,
                          selected_period=period,
+                         selected_year=year,
+                         selected_period_type=period_type,
                          selected_type=work_type)
 
 @main.route('/salary_data')
@@ -33,12 +37,14 @@ def salary_data():
     """API endpoint для получения данных о зарплате"""
     employee_id = request.args.get('employee', '')
     period = request.args.get('period', '')
+    year = request.args.get('year', '')
+    period_type = request.args.get('period_type', 'month')
     work_type = request.args.get('type', 'all')
     
-    salary_data = calculate_salary(employee_id, period, work_type)
+    salary_data = calculate_salary(employee_id, period, year, period_type, work_type)
     return jsonify(salary_data)
 
-def calculate_salary(employee_id='', period='', work_type='all'):
+def calculate_salary(employee_id='', period='', year='', period_type='month', work_type='all'):
     """
     Основная функция для расчета зарплаты по дате завершения заказа
     """
@@ -63,14 +69,24 @@ def calculate_salary(employee_id='', period='', work_type='all'):
     filtered_orders = []
     period_start = None
     period_end = None
-    if period:
+    
+    if period_type == 'month' and period:
         try:
-            year, month = period.split('-')
-            period_start = datetime(int(year), int(month), 1)
+            year_val, month = period.split('-')
+            period_start = datetime(int(year_val), int(month), 1)
             if int(month) == 12:
-                period_end = datetime(int(year) + 1, 1, 1)
+                period_end = datetime(int(year_val) + 1, 1, 1)
             else:
-                period_end = datetime(int(year), int(month) + 1, 1)
+                period_end = datetime(int(year_val), int(month) + 1, 1)
+            total_summary['period_start'] = period_start
+            total_summary['period_end'] = period_end
+        except:
+            pass
+    elif period_type == 'year' and year:
+        try:
+            year_val = int(year)
+            period_start = datetime(year_val, 1, 1)
+            period_end = datetime(year_val + 1, 1, 1)
             total_summary['period_start'] = period_start
             total_summary['period_end'] = period_end
         except:
