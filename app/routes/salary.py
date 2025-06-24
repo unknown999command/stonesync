@@ -128,43 +128,21 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
         last_workers = {}
         current_status = None
         
-        # Группируем комментарии по времени
-        comments_by_time = defaultdict(list)
+        # Новый алгоритм: идём по комментариям по порядку, смена исполнителя всегда относится к текущему этапу
         for comment in comments:
-            comments_by_time[comment.datetime].append(comment)
-        # Сортируем ключи (временные метки) по возрастанию
-        for dt in sorted(comments_by_time.keys()):
-            group = comments_by_time[dt]
-            new_status_in_group = None
-            new_executor_in_group = None
-            # Сначала ищем смену статуса и исполнителя в группе
-            for c in group:
-                status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', c.text)
-                if status_match:
-                    new_status_in_group = status_match.group(2).strip()
-                
-                executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', c.text)
-                if executor_match:
-                    new_executor_in_group = executor_match.group(2).strip()
-
-            # Теперь применяем изменения
-            if new_status_in_group:
-                current_status = new_status_in_group
-            
-            if new_executor_in_group:
-                # Если смена исполнителя и статуса в одной группе,
-                # назначаем исполнителя на новый этап.
-                if new_status_in_group:
-                    if new_status_in_group == "Изготовление":
-                        izgotovlenie_worker = new_executor_in_group
-                    elif new_status_in_group == "Монтаж":
-                        montaj_worker = new_executor_in_group
-                # Иначе, назначаем на текущий этап
-                else:
-                    if current_status == "Изготовление":
-                        izgotovlenie_worker = new_executor_in_group
-                    elif current_status == "Монтаж":
-                        montaj_worker = new_executor_in_group
+            text = comment.text
+            status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', text)
+            if status_match:
+                old_status = status_match.group(1).strip()
+                new_status = status_match.group(2).strip()
+                current_status = new_status
+            executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', text)
+            if executor_match:
+                new_executor = executor_match.group(2).strip()
+                if current_status == "Изготовление":
+                    izgotovlenie_worker = new_executor
+                elif current_status == "Монтаж":
+                    montaj_worker = new_executor
 
         if not izgotovlenie_worker and order.manufacturer_id:
             izgotovlenie_worker = order.manufacturer.name if order.manufacturer else None
