@@ -5,6 +5,7 @@ from app.models import Order, Comment, User
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
 import re
+from collections import defaultdict
 
 @main.route('/salary')
 @requires_login
@@ -127,50 +128,39 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
         last_workers = {}
         current_status = None
         
-        # Детали заказа для отображения
-        order_details = {
-            'id': order.id,
-            'address': order.address,
-            'customer': order.customer,
-            'finish_date': finish_date,
-            'izgotovlenie_price': izgotovlenie_price,
-            'montaj_price': montaj_price,
-            'total_price': (izgotovlenie_price or 0) + (montaj_price or 0)
-        }
-        
+        # Группируем комментарии по времени
+        comments_by_time = defaultdict(list)
         for comment in comments:
-            text = comment.text
-            status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', text)
-            if status_match:
-                old_status = status_match.group(1).strip()
-                new_status = status_match.group(2).strip()
-                current_status = new_status
-
-            executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', text)
-            if executor_match:
-                new_executor = executor_match.group(2).strip()
-
-                # Определяем, к какому статусу относится смена исполнителя
-                effective_status = None
-                status_change_at_same_time = False
-                for c in comments:
-                    if c.datetime == comment.datetime:
-                        match = re.search(r'⏳ Статус: .+ -> (.+)', c.text)
-                        if match:
-                            effective_status = match.group(2).strip()
-                            status_change_at_same_time = True
-                            break
-                
-                if not status_change_at_same_time:
-                    effective_status = current_status
-                
-                # Не перезаписываем исполнителя изготовления, если он уже назначен и
-                # смена происходит одновременно со сменой статуса на "Монтаж"
-                if effective_status == "Изготовление":
-                    if not (status_change_at_same_time and any(re.search(r'⏳ Статус: Изготовление -> Монтаж', c.text) for c in comments if c.datetime == comment.datetime)):
-                        izgotovlenie_worker = new_executor
-                elif effective_status == "Монтаж":
-                    montaj_worker = new_executor
+            comments_by_time[comment.datetime].append(comment)
+        # Сортируем ключи (временные метки) по возрастанию
+        for dt in sorted(comments_by_time.keys()):
+            group = comments_by_time[dt]
+            # Сначала ищем смену статуса
+            status_event = None
+            for c in group:
+                status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', c.text)
+                if status_match:
+                    status_event = status_match
+                    old_status = status_match.group(1).strip()
+                    new_status = status_match.group(2).strip()
+                    current_status = new_status
+            # Затем ищем смену исполнителя
+            for c in group:
+                executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', c.text)
+                if executor_match:
+                    new_executor = executor_match.group(2).strip()
+                    # Если в этой группе была смена статуса, то исполнитель относится к новому этапу
+                    if status_event:
+                        if current_status == "Изготовление":
+                            izgotovlenie_worker = new_executor
+                        elif current_status == "Монтаж":
+                            montaj_worker = new_executor
+                    else:
+                        # Если статуса не было, то исполнитель относится к текущему этапу
+                        if current_status == "Изготовление":
+                            izgotovlenie_worker = new_executor
+                        elif current_status == "Монтаж":
+                            montaj_worker = new_executor
 
         if not izgotovlenie_worker and order.manufacturer_id:
             izgotovlenie_worker = order.manufacturer.name if order.manufacturer else None
@@ -207,7 +197,13 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
             salary_results[izgotovlenie_worker]['total_salary'] += izgotovlenie_price
             salary_results[izgotovlenie_worker]['orders_count'] += 1
             salary_results[izgotovlenie_worker]['orders'].append({
-                **order_details,
+                'id': order.id,
+                'address': order.address,
+                'customer': order.customer,
+                'finish_date': finish_date,
+                'izgotovlenie_price': izgotovlenie_price,
+                'montaj_price': montaj_price,
+                'total_price': (izgotovlenie_price or 0) + (montaj_price or 0),
                 'work_type': 'Изготовление',
                 'price': izgotovlenie_price
             })
@@ -234,7 +230,13 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
             salary_results[montaj_worker]['total_salary'] += montaj_price
             salary_results[montaj_worker]['orders_count'] += 1
             salary_results[montaj_worker]['orders'].append({
-                **order_details,
+                'id': order.id,
+                'address': order.address,
+                'customer': order.customer,
+                'finish_date': finish_date,
+                'izgotovlenie_price': izgotovlenie_price,
+                'montaj_price': montaj_price,
+                'total_price': (izgotovlenie_price or 0) + (montaj_price or 0),
                 'work_type': 'Монтаж',
                 'price': montaj_price
             })
