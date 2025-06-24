@@ -145,29 +145,30 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
                 old_status = status_match.group(1).strip()
                 new_status = status_match.group(2).strip()
                 current_status = new_status
+
             executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', text)
             if executor_match:
-                old_executor = executor_match.group(1).strip()
                 new_executor = executor_match.group(2).strip()
-                if current_status:
-                    last_workers[current_status] = new_executor
-                if status_match:
-                    if new_status == "Изготовление":
-                        izgotovlenie_worker = new_executor
-                    elif new_status == "Монтаж":
-                        montaj_worker = new_executor
-        if not izgotovlenie_worker and "Изготовление" in last_workers:
-            izgotovlenie_worker = last_workers["Изготовление"]
-        if not montaj_worker and "Монтаж" in last_workers:
-            montaj_worker = last_workers["Монтаж"]
-        if "Завершено" in last_workers:
-            if not izgotovlenie_worker:
-                for status in ["Изготовление", "Монтаж"]:
-                    if status in last_workers:
-                        if status == "Изготовление":
-                            izgotovlenie_worker = last_workers[status]
-                        elif status == "Монтаж":
-                            montaj_worker = last_workers[status]
+
+                # Определяем, к какому статусу относится смена исполнителя
+                effective_status = None
+                status_change_at_same_time = False
+                for c in comments:
+                    if c.datetime == comment.datetime:
+                        match = re.search(r'⏳ Статус: .+ -> (.+)', c.text)
+                        if match:
+                            effective_status = match.group(2).strip()
+                            status_change_at_same_time = True
+                            break
+                
+                if not status_change_at_same_time:
+                    effective_status = current_status
+                
+                if effective_status == "Изготовление":
+                    izgotovlenie_worker = new_executor
+                elif effective_status == "Монтаж":
+                    montaj_worker = new_executor
+
         if not izgotovlenie_worker and order.manufacturer_id:
             izgotovlenie_worker = order.manufacturer.name if order.manufacturer else None
         if work_type == 'izgotovlenie' and not izgotovlenie_worker:
