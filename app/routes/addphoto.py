@@ -10,6 +10,21 @@ import os, asyncio, datetime, uuid
 from datetime import datetime
 import mimetypes
 
+# --- Поддержка HEIC/HEIF ---
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except ImportError:
+    print('ВНИМАНИЕ: pillow-heif не установлен, HEIC/HEIF не поддерживается!')
+
+from PIL import Image
+
+def log_file_info(file):
+    print('filename:', file.filename)
+    print('content_type:', file.content_type)
+    print('ext:', os.path.splitext(file.filename)[1])
+    print('guessed_ext:', mimetypes.guess_extension(file.content_type))
+
 @main.route('/addphoto', methods=['POST'])
 @requires_login
 def addphoto():
@@ -25,6 +40,7 @@ def addphoto():
 
     for file in files:
         if file and file.filename and file.content_type and file.content_type.startswith('image/'):
+            log_file_info(file)
             file_ext = os.path.splitext(file.filename)[1]
             if not file_ext:
                 # Если у файла нет расширения, пытаемся его угадать по MIME-типу
@@ -34,10 +50,24 @@ def addphoto():
             file_path = os.path.join(upload_folder, unique_filename)
             file.save(file_path)
 
+            # --- Обработка HEIC/HEIF: конвертация в JPEG для миниатюры ---
             small_filename = f"small_{unique_filename}"
             small_filepath = os.path.join(upload_folder, small_filename)
-
-            create_thumbnail(file_path, small_filepath)
+            try:
+                if file_ext.lower() in ['.heic', '.heif']:
+                    with Image.open(file_path) as img:
+                        # Конвертируем в JPEG для миниатюры
+                        rgb_img = img.convert('RGB')
+                        temp_jpeg = file_path + '.jpg'
+                        rgb_img.save(temp_jpeg, 'JPEG')
+                        create_thumbnail(temp_jpeg, small_filepath)
+                        os.remove(temp_jpeg)
+                else:
+                    create_thumbnail(file_path, small_filepath)
+            except Exception as e:
+                print(f'Ошибка при создании миниатюры для {file_path}:', e)
+                small_filename = None
+                small_filepath = None
 
             photo = Photo(order_id=order_id, path=unique_filename, small_path=small_filename)
             db.session.add(photo)
