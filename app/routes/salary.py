@@ -135,32 +135,36 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
         # Сортируем ключи (временные метки) по возрастанию
         for dt in sorted(comments_by_time.keys()):
             group = comments_by_time[dt]
-            # Сначала ищем смену статуса
-            status_event = None
+            new_status_in_group = None
+            new_executor_in_group = None
+            # Сначала ищем смену статуса и исполнителя в группе
             for c in group:
                 status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', c.text)
                 if status_match:
-                    status_event = status_match
-                    old_status = status_match.group(1).strip()
-                    new_status = status_match.group(2).strip()
-                    current_status = new_status
-            # Затем ищем смену исполнителя
-            for c in group:
+                    new_status_in_group = status_match.group(2).strip()
+                
                 executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', c.text)
                 if executor_match:
-                    new_executor = executor_match.group(2).strip()
-                    # Если в этой группе была смена статуса, то исполнитель относится к новому этапу
-                    if status_event:
-                        if current_status == "Изготовление":
-                            izgotovlenie_worker = new_executor
-                        elif current_status == "Монтаж":
-                            montaj_worker = new_executor
-                    else:
-                        # Если статуса не было, то исполнитель относится к текущему этапу
-                        if current_status == "Изготовление":
-                            izgotovlenie_worker = new_executor
-                        elif current_status == "Монтаж":
-                            montaj_worker = new_executor
+                    new_executor_in_group = executor_match.group(2).strip()
+
+            # Теперь применяем изменения
+            if new_status_in_group:
+                current_status = new_status_in_group
+            
+            if new_executor_in_group:
+                # Если смена исполнителя и статуса в одной группе,
+                # назначаем исполнителя на новый этап.
+                if new_status_in_group:
+                    if new_status_in_group == "Изготовление":
+                        izgotovlenie_worker = new_executor_in_group
+                    elif new_status_in_group == "Монтаж":
+                        montaj_worker = new_executor_in_group
+                # Иначе, назначаем на текущий этап
+                else:
+                    if current_status == "Изготовление":
+                        izgotovlenie_worker = new_executor_in_group
+                    elif current_status == "Монтаж":
+                        montaj_worker = new_executor_in_group
 
         if not izgotovlenie_worker and order.manufacturer_id:
             izgotovlenie_worker = order.manufacturer.name if order.manufacturer else None
