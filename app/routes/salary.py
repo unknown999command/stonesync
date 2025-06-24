@@ -164,8 +164,11 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
                 if not status_change_at_same_time:
                     effective_status = current_status
                 
+                # Не перезаписываем исполнителя изготовления, если он уже назначен и
+                # смена происходит одновременно со сменой статуса на "Монтаж"
                 if effective_status == "Изготовление":
-                    izgotovlenie_worker = new_executor
+                    if not (status_change_at_same_time and any(re.search(r'⏳ Статус: Изготовление -> Монтаж', c.text) for c in comments if c.datetime == comment.datetime)):
+                        izgotovlenie_worker = new_executor
                 elif effective_status == "Монтаж":
                     montaj_worker = new_executor
 
