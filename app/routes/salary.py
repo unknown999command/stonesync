@@ -128,21 +128,45 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
         last_workers = {}
         current_status = None
         
-        # Новый алгоритм: идём по комментариям по порядку, смена исполнителя всегда относится к текущему этапу
-        for comment in comments:
+        # Новый алгоритм: если меняется исполнитель, ищем далее смену статуса в ту же минуту
+        comments_count = len(comments)
+        i = 0
+        while i < comments_count:
+            comment = comments[i]
             text = comment.text
             status_match = re.search(r'⏳ Статус: (.+?) -> (.+)', text)
+            executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', text)
+            if executor_match:
+                new_executor = executor_match.group(2).strip()
+                comment_minute = comment.datetime.replace(second=0, microsecond=0)
+                # Ищем далее смену статуса в ту же минуту
+                found_status = None
+                for j in range(i+1, comments_count):
+                    next_comment = comments[j]
+                    if next_comment.datetime.replace(second=0, microsecond=0) != comment_minute:
+                        break
+                    status_match_next = re.search(r'⏳ Статус: (.+?) -> (.+)', next_comment.text)
+                    if status_match_next:
+                        found_status = status_match_next.group(2).strip()
+                        break
+                if found_status:
+                    # Исполнитель относится к новому этапу (назначаем после смены статуса)
+                    current_status = found_status
+                    if current_status == "Изготовление":
+                        izgotovlenie_worker = new_executor
+                    elif current_status == "Монтаж":
+                        montaj_worker = new_executor
+                else:
+                    # Исполнитель относится к текущему этапу
+                    if current_status == "Изготовление":
+                        izgotovlenie_worker = new_executor
+                    elif current_status == "Монтаж":
+                        montaj_worker = new_executor
             if status_match:
                 old_status = status_match.group(1).strip()
                 new_status = status_match.group(2).strip()
                 current_status = new_status
-            executor_match = re.search(r'👷 Исполнитель: (.+?) -> (.+)', text)
-            if executor_match:
-                new_executor = executor_match.group(2).strip()
-                if current_status == "Изготовление":
-                    izgotovlenie_worker = new_executor
-                elif current_status == "Монтаж":
-                    montaj_worker = new_executor
+            i += 1
 
         if not izgotovlenie_worker and order.manufacturer_id:
             izgotovlenie_worker = order.manufacturer.name if order.manufacturer else None
