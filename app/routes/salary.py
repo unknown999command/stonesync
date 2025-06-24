@@ -64,7 +64,7 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
         'montaj_total': 0,
         'total_salary': 0,
         'completed_orders': 0,
-        'total_orders': len(orders),
+        'total_orders': 0,  # временно 0, присвоим позже
         'period_start': None,
         'period_end': None
     }
@@ -119,6 +119,7 @@ def calculate_salary(employee_id='', period='', year='', period_type='month', wo
         filtered_orders.append((order, comments, finish_date))
     
     total_summary['completed_orders'] = len(filtered_orders)
+    total_summary['total_orders'] = len(filtered_orders)
     
     for order, comments, finish_date in filtered_orders:
         izgotovlenie_worker = None
