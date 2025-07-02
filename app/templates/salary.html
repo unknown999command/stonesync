@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/salary.css') }}">
+    <title>StoneSync | Заработок сотрудников</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/stone.ico') }}">
+</head>
+<script>
+    if (window.innerWidth < 768) {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=0.4');
+    } else {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }
+</script>
+<body>
+    <header>
+        <h1 class="title">Заработок сотрудников</h1>
+        <a href="{{ url_for('main.index') }}" class="create-button">На главную</a>
+    </header>
+
+    <!-- Общая статистика -->
+    {% if salary_data.summary.total_orders > 0 %}
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ salary_data.summary.total_orders }}</div>
+                <div class="stat-label">Всего заказов</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ salary_data.summary.completed_orders }}</div>
+                <div class="stat-label">Завершено</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ "{:,}".format(salary_data.summary.total_salary).replace(',', ' ') }} ₽</div>
+                <div class="stat-label">Общий заработок</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ salary_data.employees|length }}</div>
+                <div class="stat-label">Сотрудников</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Фильтры -->
+    <form method="GET" action="{{ url_for('main.salary') }}" class="filters-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <div class="filter">
+                            <img src="{{ url_for('static', filename='image/person.svg') }}" alt="Иконка сотрудника">
+                            <select id="filter-employee" name="employee">
+                                <option value="" {% if not selected_employee %}selected{% endif %}>Все сотрудники</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if selected_employee == employee.id|string %}selected{% endif %}>{{ employee.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="filter">
+                            <img src="{{ url_for('static', filename='image/calendar.svg') }}" alt="Иконка календаря">
+                            <select id="period-type" name="period_type" style="width: 80px; margin-right: 0.5rem;">
+                                <option value="month" {% if selected_period_type == 'month' %}selected{% endif %}>Месяц</option>
+                                <option value="year" {% if selected_period_type == 'year' %}selected{% endif %}>Год</option>
+                            </select>
+                            <input type="month" id="filter-period" name="period" value="{{ selected_period }}" style="width: calc(100% - 90px);">
+                            <input type="number" id="filter-year" name="year" value="{{ selected_year }}" min="2020" max="2030" style="width: calc(100% - 90px); display: none;" placeholder="Год">
+                        </div>
+                    </th>
+                    <th>
+                        <div class="filter">
+                            <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
+                            <select id="filter-type" name="type">
+                                <option value="all" {% if selected_type == 'all' %}selected{% endif %}>Все работы</option>
+                                <option value="izgotovlenie" {% if selected_type == 'izgotovlenie' %}selected{% endif %}>Изготовление</option>
+                                <option value="montaj" {% if selected_type == 'montaj' %}selected{% endif %}>Монтаж</option>
+                            </select>
+                        </div>
+                    </th>
+                    <th>
+                        <button type="submit" class="create-button" style="margin: 0;">Показать</button>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </form>
+
+    <!-- Таблица заработка -->
+    <table class="table-orders">
+        <thead>
+            <tr>
+                <th class="col-employee">Сотрудник</th>
+                <th class="col-orders">Заказов</th>
+                <th class="col-izgotovlenie">Изготовление (₽)</th>
+                <th class="col-montaj">Монтаж (₽)</th>
+                <th class="col-total">Итого (₽)</th>
+                <th class="col-avg">Средний заказ</th>
+                <th class="col-period">Период работы</th>
+            </tr>
+            <tr>
+                <th colspan="7"><hr></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if salary_data.employees %}
+                {% for employee_name, data in salary_data.employees.items() %}
+                <tr class="employee-row" data-employee="{{ employee_name }}">
+                    <td class="col-employee">
+                        <div class="employee-info">
+                            <strong>{{ employee_name }}</strong>
+                            <small class="employee-stats">
+                                {{ data.orders_count }} заказов • 
+                                {{ "{:,}".format(data.avg_order_value|round(0)).replace(',', ' ') }} ₽ средний
+                            </small>
+                        </div>
+                    </td>
+                    <td class="col-orders">{{ data.orders_count }}</td>
+                    <td class="col-izgotovlenie">{{ "{:,}".format(data.izgotovlenie_total).replace(',', ' ') if data.izgotovlenie_total > 0 else '-' }}</td>
+                    <td class="col-montaj">{{ "{:,}".format(data.montaj_total).replace(',', ' ') if data.montaj_total > 0 else '-' }}</td>
+                    <td class="col-total">{{ "{:,}".format(data.total_salary).replace(',', ' ') }}</td>
+                    <td class="col-avg">{{ "{:,}".format(data.avg_order_value|round(0)).replace(',', ' ') }} ₽</td>
+                    <td class="col-period">
+                        {% if data.first_order_date and data.last_order_date %}
+                            {% if data.first_order_date.strftime('%d.%m') == data.last_order_date.strftime('%d.%m') %}
+                                {{ data.first_order_date.strftime('%d.%m.%Y') }}
+                            {% else %}
+                                {{ data.first_order_date.strftime('%d.%m') }} - {{ data.last_order_date.strftime('%d.%m.%Y') }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr class="order-details" id="details-{{ employee_name|replace(' ', '-') }}" style="display: none;">
+                    <td colspan="7">
+                        <div class="order-details-content">
+                            <h4>Детали заказов {{ employee_name }}:</h4>
+                            <div class="orders-list">
+                                {% for order in data.orders %}
+                                <div class="order-item">
+                                    <div class="order-header">
+                                        <span class="order-id">#{{ order.id }}</span>
+                                        <span class="order-type">{{ order.work_type }}</span>
+                                        <span class="order-price">{{ "{:,}".format(order.price).replace(',', ' ') }} ₽</span>
+                                        <span class="order-date">{{ order.finish_date.strftime('%d.%m.%Y') }}</span>
+                                    </div>
+                                    <div class="order-info">
+                                        <div class="order-customer">{{ order.customer }}</div>
+                                        <div class="order-address">{{ order.address }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" class="empty-state">Данные не найдены</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- Итоговая строка -->
+    {% if salary_data.summary.total_salary > 0 %}
+    <div class="summary-box">
+        <strong>Общий итог: {{ "{:,}".format(salary_data.summary.total_salary).replace(',', ' ') }} ₽</strong>
+        <small>
+            Заказов: {{ salary_data.summary.orders_count }} | 
+            Изготовление: {{ "{:,}".format(salary_data.summary.izgotovlenie_total).replace(',', ' ') }} ₽ | 
+            Монтаж: {{ "{:,}".format(salary_data.summary.montaj_total).replace(',', ' ') }} ₽
+            {% if selected_period_type == 'month' and selected_period %}
+            | Период: {{ selected_period }}
+            {% elif selected_period_type == 'year' and selected_year %}
+            | Год: {{ selected_year }}
+            {% endif %}
+        </small>
+    </div>
+    {% endif %}
+
+    <script>
+        // Функция переключения между месяцем и годом
+        function togglePeriodType() {
+            const periodType = document.getElementById('period-type').value;
+            const monthInput = document.getElementById('filter-period');
+            const yearInput = document.getElementById('filter-year');
+            
+            if (periodType === 'month') {
+                monthInput.style.display = 'inline-block';
+                yearInput.style.display = 'none';
+                monthInput.name = 'period';
+                yearInput.name = 'year_disabled';
+            } else {
+                monthInput.style.display = 'none';
+                yearInput.style.display = 'inline-block';
+                monthInput.name = 'period_disabled';
+                yearInput.name = 'year';
+            }
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePeriodType();
+            
+            // Установка текущего месяца/года по умолчанию, если не выбран период
+            const periodType = document.getElementById('period-type').value;
+            if (periodType === 'month' && !document.getElementById('filter-period').value) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                document.getElementById('filter-period').value = `${year}-${month}`;
+            } else if (periodType === 'year' && !document.getElementById('filter-year').value) {
+                const now = new Date();
+                document.getElementById('filter-year').value = now.getFullYear();
+            }
+        });
+        
+        // Обработчик изменения типа периода
+        document.getElementById('period-type').addEventListener('change', function() {
+            togglePeriodType();
+            // Автоматическая отправка формы при изменении типа периода
+            document.querySelector('form').submit();
+        });
+        
+        // Автоматическая отправка формы при изменении фильтров
+        document.getElementById('filter-employee').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        document.getElementById('filter-period').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        document.getElementById('filter-year').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        document.getElementById('filter-type').addEventListener('change', function() {
+            document.querySelector('form').submit();
+        });
+        
+        // Показать/скрыть детали заказов при клике на строку сотрудника
+        document.querySelectorAll('.employee-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const employeeName = this.getAttribute('data-employee');
+                const detailsRow = document.getElementById(`details-${employeeName.replace(/ /g, '-')}`);
+                if (detailsRow) {
+                    const isVisible = detailsRow.style.display !== 'none';
+                    detailsRow.style.display = isVisible ? 'none' : 'table-row';
+                    this.classList.toggle('expanded', !isVisible);
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

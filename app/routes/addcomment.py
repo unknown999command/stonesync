@@ -37,25 +37,26 @@ def add_comment():
         order_id=order_id  # ID заказа
     )
     db.session.add(comment)  # Добавление комментария в сессию базы данных
-    new(order_id)  # Обновление состояния заказа (например, отправка уведомления)
+    new(order_id, session.get('user_id'))  # Обновление состояния заказа (например, отправка уведомления)
     db.session.commit()  # Сохранение изменений в базе данных
 
     # Импорт и вызов функции для отправки уведомления о новом комментарии через бота
     from app.bot.notf import send_notification
-    attach = f'<b>\n\nПрикреплено: {file_count} файлов</b>' if file_count > 0 else ""  # Если есть файлы, добавляем информацию о них
     # Асинхронная отправка уведомления
-    asyncio.run(send_notification(
-        order.manufacturer_id,
-        f"<blockquote>💬 <b>Новый комментарий</b>\n{order.address}</blockquote>\n\n<b>👷 {comment.user.name}\n----------------------------------------</b>\n{comment.text}{attach}", 
-        order.id,
-        True
-    ))
-    asyncio.run(send_notification(
-        order.manufacturer_id if session['user_id'] != order.manufacturer_id else '', 
-        f"<blockquote>💬 <b>Новый комментарий</b>\n{order.address}</blockquote>\n\n<b>👷 {comment.user.name}\n----------------------------------------</b>\n{comment.text}{attach}", 
-        order.id,
-        False
-    ))
+    if order:
+        attach = f'<b>\n\nПрикреплено: {file_count} файлов</b>' if file_count > 0 else ""  # Если есть файлы, добавляем информацию о них
+        asyncio.run(send_notification(
+            order.manufacturer_id,
+            f"<blockquote>💬 <b>Новый комментарий</b>\n{order.address}</blockquote>\n\n<b>👷 {comment.user.name}\n----------------------------------------</b>\n{comment.text}{attach}", 
+            order.id,
+            True
+        ))
+        asyncio.run(send_notification(
+            order.manufacturer_id if str(session.get('user_id')) != str(order.manufacturer_id) else '', 
+            f"<blockquote>💬 <b>Новый комментарий</b>\n{order.address}</blockquote>\n\n<b>👷 {comment.user.name}\n----------------------------------------</b>\n{comment.text}{attach}", 
+            order.id,
+            False
+        ))
 
     # Обработка загруженных файлов (сохранение на сервере)
     handle_files(files, comment.id, IMAGE_UPLOAD_FOLDER, FILE_UPLOAD_FOLDER)
@@ -74,21 +75,25 @@ def add_comment():
     return jsonify(comment_data), 200  # Возвращаем данные в формате JSON с кодом успеха 200
 
 # Функция проверки, является ли файл изображением по расширению
-def is_image(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}  # Разрешенные форматы изображений
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS  # Проверка расширения файла
+def is_image(file):
+    if file and file.content_type:
+        return file.content_type.startswith('image/')
+    return False
 
 # Функция для обработки файлов (сохранение изображений и других файлов на сервере)
 def handle_files(files, comment_id, image_upload_folder, file_upload_folder):
     for file in files:
         if file and file.filename:  # Если файл существует и имеет имя
             file_extension = os.path.splitext(file.filename)[1]  # Получение расширения файла
+            if not file_extension and file.content_type:
+                import mimetypes
+                file_extension = mimetypes.guess_extension(file.content_type) or '.jpg'
             unique_filename = f"{uuid.uuid4().hex}{file_extension}"  # Создание уникального имени файла с помощью UUID
-            if is_image(file.filename):  # Если файл - изображение
+            if is_image(file):  # Если файл - изображение
                 file_path = os.path.join(image_upload_folder, unique_filename)  # Путь для сохранения изображения
                 file.save(file_path)  # Сохранение файла на диск
                 # Создание миниатюры изображения
-                thumbnail_filename = f"{os.path.splitext(unique_filename)[0]}_small{file_extension}"
+                thumbnail_filename = f"small_{unique_filename}"
                 thumbnail_path = os.path.join(image_upload_folder, thumbnail_filename)
                 create_thumbnail(file_path, thumbnail_path)  # Создание миниатюры с помощью функции
                 # Добавление информации о фотографии в базу данных
