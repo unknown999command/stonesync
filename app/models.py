@@ -34,6 +34,7 @@ class Order(db.Model):
     izgotovlenie = db.Column(db.Integer, nullable=True)
     montaj = db.Column(db.Integer, nullable=True)
     customer = db.Column(db.String(100), nullable=False)
+    lift = db.Column(db.Integer, nullable=True, default=1)
     manufacturer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     status = db.relationship('Status')

@@ -31,6 +31,7 @@ def edit():
         doplata = data_array.get('doplata') or None
         izgotovlenie = data_array.get('izgotovlenie') or None
         montaj = data_array.get('montaj') or None
+        lift = data_array.get('lift')
         deadline_str = data_array.get('deadline')
         manufacturer_id = data_array.get('manufacturer')
         desc = data_array.get('desc') or None
@@ -86,6 +87,13 @@ def edit():
             order.montaj = None if montaj in [None, 0] else int(montaj)
             changes_for_tg += f"<b>💵 Цена за монтаж:</b> {montaj}\n"
             
+        if lift != order.lift:
+            lift_text = "Большой лифт" if lift == 1 else "Маленький лифт" if lift == 2 else "Не указан"
+            order_lift_text = "Большой лифт" if order.lift == 1 else "Маленький лифт" if order.lift == 2 else "Не указан"
+            changes.append(f'Лифт: {order_lift_text} -> {lift_text}')
+            order.lift = lift
+            changes_for_tg += f"<b>Лифт:</b> {lift_text}\n"
+
         order.deadline = update_field("📅 Дата изготовления:", deadline, order.deadline, changes)
 
         # Обновление статуса заказа
@@ -164,6 +172,7 @@ def edit():
             'doplata': order.doplata,
             'izgotovlenie': order.izgotovlenie,
             'montaj': order.montaj,
+            'lift': order.lift,
             'deadline': order.deadline.strftime('%Y-%m-%dT%H:%M') if order.deadline else None,
             'manufacturer': manufacturer_name,
             'manufacturer_id': manufacturer_id,
