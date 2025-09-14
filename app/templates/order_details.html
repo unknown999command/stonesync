@@ -186,6 +186,10 @@
                             Большой лифт
                         {% elif order.lift == 2 %}
                             Маленький лифт
+                        {% elif order.lift == 3 %}
+                            Нет лифта
+                        {% elif order.lift == 4 %}
+                            Частный дом
                         {% else %}
                             Не указан
                         {% endif %}
@@ -205,6 +209,8 @@
                             <option value="None" {% if order.lift is none %}selected{% endif %}>Не указан</option>
                             <option value="1" {% if order.lift == 1 %}selected{% endif %}>Большой лифт</option>
                             <option value="2" {% if order.lift == 2 %}selected{% endif %}>Маленький лифт</option>
+                            <option value="3" {% if order.lift == 3 %}selected{% endif %}>Нет лифта</option>
+                            <option value="4" {% if order.lift == 4 %}selected{% endif %}>Частный дом</option>
                         </select>
                     </div>
                 </div>

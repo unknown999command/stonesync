@@ -88,8 +88,8 @@ def edit():
             changes_for_tg += f"<b>💵 Цена за монтаж:</b> {montaj}\n"
             
         if lift != order.lift:
-            lift_text = "Большой лифт" if lift == 1 else "Маленький лифт" if lift == 2 else "Не указан"
-            order_lift_text = "Большой лифт" if order.lift == 1 else "Маленький лифт" if order.lift == 2 else "Не указан"
+            lift_text = "Большой лифт" if lift == 1 else "Маленький лифт" if lift == 2 else "Нет лифта" if lift == 3 else "Частный дом" if lift == 4 else "Не указан"
+            order_lift_text = "Большой лифт" if order.lift == 1 else "Маленький лифт" if order.lift == 2 else "Нет лифта" if order.lift == 3 else "Частный дом" if order.lift == 4 else "Не указан"
             changes.append(f'↕️ Лифт: {order_lift_text} -> {lift_text}')
             order.lift = lift
             changes_for_tg += f"<b>↕️ Лифт:</b> {lift_text}\n"

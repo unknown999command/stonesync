@@ -96,7 +96,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             doplata = f"{int(order.doplata):,}".replace(',', ' ') + " ₽" if order.doplata else 'Не указано'
             izgotovlenie = f"{int(order.izgotovlenie):,}".replace(',', ' ') + " ₽" if order.izgotovlenie else 'Не указано'
             montaj = f"{int(order.montaj):,}".replace(',', ' ') + " ₽" if order.montaj else 'Не указано'
-            lift = "Большой" if order.lift == 1 else "Маленький" if order.lift == 2 else "Не указан"
+            lift = "Большой" if order.lift == 1 else "Маленький" if order.lift == 2 else "Нет лифта" if order.lift == 3 else "Частный дом" if order.lift == 4 else "Не указан"
             if user['role'] == '1':
                 manufacturer = order.manufacturer.name if order.manufacturer_id else 'Не назначен'
                 price = f"{int(order.price):,}".replace(',', ' ') + " ₽" if order.price else 'Не указано'
