@@ -15,5 +15,6 @@ class Config:
         {'telegram_id': '1576170266', 'user_id': '4', 'role': '0', 'name': 'Акишин'},
         {'telegram_id': '5336138824', 'user_id': '5', 'role': '0', 'name': 'Виталик'},
         {'telegram_id': '1819582581', 'user_id': '6', 'role': '0', 'name': 'Белорус'},
-        {'telegram_id': '5426669376', 'user_id': '4', 'role': '0', 'name': 'Бублик'}
+        {'telegram_id': '5426669376', 'user_id': '7', 'role': '0', 'name': 'Бублик'},
+        {'telegram_id': '7425294524', 'user_id': '8', 'role': '0', 'name': 'Дмитрий'}
     ]
