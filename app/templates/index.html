@@ -49,9 +49,13 @@
     
     <header>
         <h1 class="title">Список заказов</h1>
+        {% if session.get('user_role') == '1' %}
         <a href="{{ url_for('main.create') }}" class="create-button">Новый заказ</a>
+        {% endif %}
         <a href="{{ url_for('main.map') }}" class="map-button">Карта</a>
+        {% if session.get('user_role') == '1' %}
         <a href="{{ url_for('main.salary') }}" class="salary-button">Заработок</a>
+        {% endif %}
     </header>
 
     <!-- Фильтры -->
