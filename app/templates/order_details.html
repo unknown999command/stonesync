@@ -179,6 +179,22 @@
                         {% endif %}
                     </div>
                 </div>
+                <div class="lift manufacturer" id="show{{ order.id }}">
+                    <img src="{{ url_for('static', filename='image/lift.svg') }}" alt="Иконка лифта">
+                    <div id="show-lift{{ order.id }}">
+                        {% if order.lift == 1 %}
+                            Большой лифт
+                        {% elif order.lift == 2 %}
+                            Маленький лифт
+                        {% elif order.lift == 3 %}
+                            Нет лифта
+                        {% elif order.lift == 4 %}
+                            Частный дом
+                        {% else %}
+                            Не указан
+                        {% endif %}
+                    </div>
+                </div>
                 <div class="doplata" id="edit{{ order.id }}">
                     <img src="{{ url_for('static', filename='image/price.svg') }}" alt="Иконка цены">
                     <div>
@@ -188,6 +204,14 @@
                         <input type="number" id="izgotovlenie{{ order.id }}" name="izgotovlenie{{ order.id }}" min="0" step="0.01" placeholder="Введите цену за изготовление" value="{{ order.izgotovlenie }}">
                         Монтаж
                         <input type="number" id="montaj{{ order.id }}" name="montaj{{ order.id }}" min="0" step="0.01" placeholder="Введите цену за монтаж" value="{{ order.montaj }}">
+                        Лифт
+                        <select name="lift{{ order.id }}" id="lift{{ order.id }}">
+                            <option value="None" {% if order.lift is none %}selected{% endif %}>Не указан</option>
+                            <option value="1" {% if order.lift == 1 %}selected{% endif %}>Большой лифт</option>
+                            <option value="2" {% if order.lift == 2 %}selected{% endif %}>Маленький лифт</option>
+                            <option value="3" {% if order.lift == 3 %}selected{% endif %}>Нет лифта</option>
+                            <option value="4" {% if order.lift == 4 %}selected{% endif %}>Частный дом</option>
+                        </select>
                     </div>
                 </div>
                 <div class="deadline" id="show{{ order.id }}">
@@ -563,6 +587,7 @@
                 document.getElementById('doplata{{ order.id }}'),
                 document.getElementById('izgotovlenie{{ order.id }}'),
                 document.getElementById('montaj{{ order.id }}'),
+                document.getElementById('lift{{ order.id }}'),
                 document.getElementById('deadline{{ order.id }}'),
                 document.getElementById('manufacturer{{ order.id }}'),
                 document.getElementById('desc{{ order.id }}'),
@@ -593,6 +618,7 @@
                 doplata: parseFloat(getValueOrDefault('doplata{{ order.id }}')) || 0,
                 izgotovlenie: parseFloat(getValueOrDefault('izgotovlenie{{ order.id }}')) || 0,
                 montaj: parseFloat(getValueOrDefault('montaj{{ order.id }}')) || 0,
+                lift: getValueOrDefault('lift{{ order.id }}') === 'None' ? null : parseInt(getValueOrDefault('lift{{ order.id }}')),
                 deadline: getValueOrDefault('deadline{{ order.id }}'),
                 manufacturer: getValueOrDefault('manufacturer{{ order.id }}'),
                 desc: getValueOrDefault('desc{{ order.id }}') || '',
@@ -626,6 +652,7 @@
                     document.getElementById('show-doplata{{ order.id }}').innerHTML = formatCurrency(response.edit.doplata) + " (Доплата)";
                     document.getElementById('show-izgotovlenie{{ order.id }}').innerHTML = formatCurrency(response.edit.izgotovlenie) + " (Изготовление)";
                     document.getElementById('show-montaj{{ order.id }}').innerHTML = formatCurrency(response.edit.montaj) + " (Монтаж)";
+                    document.getElementById('show-lift{{ order.id }}').textContent = formatLift(response.edit.lift);
                     document.getElementById('tr{{ order.id }}').setAttribute('data-customer', response.edit.customer);
                     document.getElementById('tr{{ order.id }}').setAttribute('data-address', response.edit.address);
                     document.getElementById('tr{{ order.id }}').setAttribute('data-status', response.edit.status_id);
@@ -635,6 +662,11 @@
                     function formatCurrency(value) {
                         if (value === null || value === undefined) return 'Не указана';
                         return value.toLocaleString('ru-RU') + ' <span>&#8381;</span>';
+                    }
+                    function formatLift(value) {
+                        if (value === 1) return 'Большой лифт';
+                        if (value === 2) return 'Маленький лифт';
+                        return 'Не указан';
                     }
                     function generatePriceHtml(price, prepayment) {
                         let htmlString = '';
